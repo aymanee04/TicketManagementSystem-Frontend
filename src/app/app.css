@@ -1,0 +1,9 @@
+/* Remove scrollbar globally from this component */
+:host ::ng-deep {
+  overflow: hidden;
+}
+
+/* Or just hide the scrollbar but keep scrolling */
+:host ::ng-deep ::-webkit-scrollbar {
+  display: none;
+}

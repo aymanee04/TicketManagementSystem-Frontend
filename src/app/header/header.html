@@ -1,0 +1,137 @@
+<header class="bg-white border-b border-gray-200 sticky top-0 z-40 backdrop-blur-sm">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <div>
+        <h1 class="text-xl font-semibold text-gray-900">{{ pageTitle }}</h1>
+      </div>
+
+      <div class="flex items-center gap-4">
+        @if (currentUser) {
+          <button
+            (click)="navigateToNewTicket()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
+          >
+            <lucide-icon name="plusIcon" [size]="18"></lucide-icon>
+            New Ticket
+          </button>
+        }
+
+        @if (currentUser) {
+          <div class="relative">
+            <button
+              (click)="toggleNotifications()"
+              class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
+              title="Notifications"
+            >
+              <lucide-icon name="bellIcon" [size]="22"></lucide-icon>
+              @if (unreadCount > 0) {
+                <span
+                  class="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full animate-pulse min-w-5"
+                >
+                  {{ unreadCount > 9 ? '9+' : unreadCount }}
+                </span>
+              }
+            </button>
+
+            @if (showNotifications) {
+              <div
+                class="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden z-50 animate-slideDown"
+              >
+                <div
+                  class="px-4 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between"
+                >
+                  <div class="flex items-center gap-2">
+                    <lucide-icon name="bellIcon" [size]="18"></lucide-icon>
+                    <h3 class="font-semibold">Notifications</h3>
+                  </div>
+                  @if (unreadCount > 0) {
+                    <button
+                      (click)="markAllAsRead(); $event.stopPropagation()"
+                      class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition-colors"
+                    >
+                      Mark all read
+                    </button>
+                  }
+                </div>
+
+                <div class="max-h-96 overflow-y-auto custom-scrollbar">
+                  @if (notifications.length === 0) {
+                    <div class="px-4 py-12 text-center text-gray-500">
+                      <lucide-icon
+                        name="inbox"
+                        [size]="48"
+                        class="mx-auto mb-3 text-gray-300"
+                      ></lucide-icon>
+                      <p class="font-medium">No notifications yet</p>
+                      <p class="text-sm mt-1">We'll notify you when something happens</p>
+                    </div>
+                  } @else {
+                    @for (notification of notifications; track notification.id) {
+                      <div
+                        (click)="markAsRead(notification)"
+                        class="px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors group"
+                        [class.bg-blue-50]="!notification.read"
+                      >
+                        <div class="flex items-start gap-3">
+                          <div [class]="getNotificationColor(notification.type) + ' mt-1 shrink-0'">
+                            <lucide-icon
+                              [name]="getNotificationIcon(notification.type)"
+                              [size]="20"
+                            ></lucide-icon>
+                          </div>
+
+                          <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold text-gray-900">
+                              {{ notification.title }}
+                            </p>
+                            <p class="text-sm text-gray-600 mt-1 line-clamp-2">
+                              {{ notification.message }}
+                            </p>
+                            <div class="flex items-center gap-2 mt-2">
+                              <p class="text-xs text-gray-500">
+                                {{ getTimeAgo(notification.timestamp) }}
+                              </p>
+                              <span class="text-gray-300">•</span>
+                              <p
+                                class="text-xs text-blue-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                View ticket →
+                              </p>
+                            </div>
+                          </div>
+
+                          @if (!notification.read) {
+                            <div class="w-2 h-2 bg-blue-600 rounded-full mt-2 shrink-0"></div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  }
+                </div>
+
+                @if (notifications.length > 0) {
+                  <div class="px-4 py-3 bg-gray-50 border-t border-gray-200">
+                    <a
+                      routerLink="/tickets"
+                      (click)="showNotifications = false"
+                      class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center justify-center gap-1"
+                    >
+                      View all tickets
+                      <lucide-icon name="arrowRight" [size]="14"></lucide-icon>
+                    </a>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <ng-content select="[slot=actions]"></ng-content>
+      </div>
+    </div>
+  </div>
+</header>
+
+@if (showNotifications) {
+  <div class="fixed inset-0 z-30" (click)="showNotifications = false"></div>
+}

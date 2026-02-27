@@ -1,0 +1,22 @@
+import { ClientStatus } from './enums';
+import { User } from './user.model';
+
+export interface Client {
+    clientId: number;
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+    status: ClientStatus;
+    createdAt: string;
+    ticketIds?: number[];
+    employees?: User[];
+}
+
+export interface CreateClientRequest {
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+    status?: ClientStatus;
+}

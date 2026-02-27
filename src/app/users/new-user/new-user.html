@@ -1,0 +1,244 @@
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-4xl mx-auto px-4">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Create New User</h1>
+      <p class="text-gray-600 mt-2">Add a new user to the system and assign them to a client</p>
+    </div>
+
+    @if (error) {
+      <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div class="flex items-center">
+          <i class="fas fa-exclamation-circle mr-2"></i>
+          <span>{{ error }}</span>
+        </div>
+      </div>
+    }
+
+    <form
+      [formGroup]="userForm"
+      (ngSubmit)="onSubmit()"
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-8"
+    >
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="md:col-span-2">
+          <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
+            Full Name <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="name"
+            formControlName="name"
+            placeholder="Enter full name"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            [class.border-red-500]="name?.invalid && name?.touched"
+          />
+          @if (name?.invalid && name?.touched) {
+            <div class="mt-2 text-sm text-red-600">
+              @if (name?.errors?.['required']) {
+                <p>Name is required</p>
+              }
+              @if (name?.errors?.['minlength']) {
+                <p>Name must be at least 3 characters</p>
+              }
+            </div>
+          }
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
+            Email <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="user@example.com"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            [class.border-red-500]="email?.invalid && email?.touched"
+          />
+          @if (email?.invalid && email?.touched) {
+            <div class="mt-2 text-sm text-red-600">
+              @if (email?.errors?.['required']) {
+                <p>Email is required</p>
+              }
+              @if (email?.errors?.['email']) {
+                <p>Invalid email format</p>
+              }
+            </div>
+          }
+        </div>
+        <div>
+          <label for="jobTitle" class="block text-sm font-semibold text-gray-700 mb-2">
+            Job Title <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="jobTitle"
+            formControlName="jobTitle"
+            placeholder="e.g., Backend Developer"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            [class.border-red-500]="jobTitle?.invalid && jobTitle?.touched"
+          />
+          @if (jobTitle?.invalid && jobTitle?.touched) {
+            <div class="mt-2 text-sm text-red-600">
+              @if (jobTitle?.errors?.['required']) {
+                <p>Job title is required</p>
+              }
+            </div>
+          }
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">
+            Password <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="password"
+            id="password"
+            formControlName="password"
+            placeholder="Minimum 6 characters"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            [class.border-red-500]="password?.invalid && password?.touched"
+          />
+          @if (password?.invalid && password?.touched) {
+            <div class="mt-2 text-sm text-red-600">
+              @if (password?.errors?.['required']) {
+                <p>Password is required</p>
+              }
+              @if (password?.errors?.['minlength']) {
+                <p>Password must be at least 6 characters</p>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="md:col-span-2">
+          <label for="clientId" class="block text-sm font-semibold text-gray-700 mb-2">
+            Assign to Client <span class="text-red-500">*</span>
+          </label>
+
+          @if (loadingClients) {
+            <div class="text-gray-500">Loading clients...</div>
+          } @else {
+            <select
+              id="clientId"
+              formControlName="clientId"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              [class.border-red-500]="clientId?.invalid && clientId?.touched"
+            >
+              <option [value]="null" disabled selected>Select a client</option>
+              @for (client of clients; track client.clientId) {
+                <option [value]="client.clientId">{{ client.name }} - {{ client.company }}</option>
+              }
+            </select>
+
+            @if (clientId?.invalid && clientId?.touched) {
+              <div class="mt-2 text-sm text-red-600">
+                <p>Please select a client</p>
+              </div>
+            }
+          }
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-sm font-semibold text-gray-700 mb-3">
+            Roles <span class="text-red-500">*</span>
+          </label>
+
+          @if (loadingRoles) {
+            <div class="text-gray-500">Loading roles...</div>
+          } @else {
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              @for (role of roles; track role) {
+                <div
+                  (click)="onRoleToggle(role)"
+                  class="p-4 border-2 rounded-lg cursor-pointer transition-all duration-200"
+                  [class]="
+                    isRoleSelected(role)
+                      ? getRoleBadgeClass(role)
+                      : 'border-gray-300 hover:border-gray-400'
+                  "
+                >
+                  <div class="flex items-center">
+                    <div class="ml-3">
+                      <p class="font-semibold" [class]="getRoleTextClass(role)">{{ role }}</p>
+                      <p class="text-xs text-gray-600 mt-1">
+                        @if (role === 'ADMIN') {
+                          Full system access
+                        } @else if (role === 'MANAGER') {
+                          Approve/reject tickets
+                        } @else {
+                          Create tickets
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (selectedRoles.length === 0 && userForm.touched) {
+              <div class="mt-2 text-sm text-red-600">
+                <p>Please select at least one role</p>
+              </div>
+            }
+          }
+        </div>
+
+        @if (selectedRoles.length > 0) {
+          <div class="md:col-span-2">
+            <p class="text-sm text-gray-600 mb-2">Selected roles:</p>
+            <div class="flex flex-wrap gap-2">
+              @for (role of selectedRoles; track role) {
+                <span
+                  class="px-3 py-1 rounded-full text-sm font-semibold flex items-center"
+                  [class.bg-red-100]="role === 'ADMIN'"
+                  [class.text-red-800]="role === 'ADMIN'"
+                  [class.bg-blue-100]="role === 'MANAGER'"
+                  [class.text-blue-800]="role === 'MANAGER'"
+                  [class.bg-green-100]="role === 'USER'"
+                  [class.text-green-800]="role === 'USER'"
+                >
+                  {{ role }}
+                  <button
+                    type="button"
+                    (click)="onRoleToggle(role)"
+                    class="ml-2 hover:text-gray-700"
+                  ></button>
+                </span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 mt-6">
+        <button
+          type="button"
+          (click)="cancel()"
+          class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          [disabled]="loading"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+          [disabled]="loading || userForm.invalid || selectedRoles.length === 0"
+        >
+          @if (loading) {
+            <span class="flex items-center">
+              <lucide-icon name="loaderCircleIcon"></lucide-icon>
+              Creating...
+            </span>
+          } @else {
+            <span class="flex items-center">
+              <i class="fas fa-user-plus mr-2"></i>
+              Create User
+            </span>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

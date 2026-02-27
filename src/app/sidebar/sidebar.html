@@ -1,0 +1,181 @@
+<aside
+  class="sidebar w-64 bg-white border-r border-gray-200 flex flex-col md:static absolute inset-y-0 left-0 z-30"
+>
+  <div class="p-6 flex flex-col h-full">
+    <div class="flex items-center mb-10">
+      <div
+        class="w-10 h-10 bg-linear-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-md"
+      ></div>
+      <h1 class="text-xl font-bold text-gray-800 ml-3">TicketFlow</h1>
+    </div>
+
+    <nav class="flex-1 space-y-1">
+      <a
+        routerLink="/"
+        routerLinkActive="bg-blue-50 text-blue-600 border-r-4 border-blue-600"
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+      >
+        <lucide-icon name="layoutDashboard" class="mr-3" [size]="20"></lucide-icon>
+        <span class="font-medium">Dashboard</span>
+      </a>
+
+      <a
+        routerLink="/tickets"
+        routerLinkActive="bg-blue-50 text-blue-600 border-r-4 border-blue-600"
+        class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+      >
+        <lucide-icon name="ticketsIcon" class="mr-3" [size]="20"></lucide-icon>
+        <span class="font-medium">Tickets</span>
+      </a>
+
+      <!-- Clients Dropdown -->
+      @if (hasRole('ADMIN')) {
+        <div>
+          <button
+            type="button"
+            (click)="toggleClients()"
+            class="w-full flex items-center justify-between px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <div class="flex items-center">
+              <lucide-icon name="building2" class="mr-3" [size]="20"></lucide-icon>
+              <span class="font-medium">Clients</span>
+            </div>
+            <lucide-icon
+              [class.rotate-180]="clientsOpen"
+              class="transition-transform duration-200"
+              name="chevronDown"
+              [size]="16"
+            ></lucide-icon>
+          </button>
+          @if (clientsOpen) {
+            <div class="ml-10 mt-1 space-y-1">
+              <a
+                routerLink="/clients"
+                routerLinkActive="text-blue-600 font-medium bg-blue-50"
+                class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                All Clients
+              </a>
+              @if (hasRole('ADMIN')) {
+                <a
+                  routerLink="/clients/new"
+                  routerLinkActive="text-blue-600 font-medium bg-blue-50"
+                  class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  New Client
+                </a>
+              }
+            </div>
+          }
+        </div>
+      }
+      <!-- Users Dropdown -->
+      <div>
+        <button
+          type="button"
+          (click)="toggleUsers()"
+          class="w-full flex items-center justify-between px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <div class="flex items-center">
+            <lucide-icon name="users" class="mr-3" [size]="20"></lucide-icon>
+            <span class="font-medium">Users</span>
+          </div>
+          <lucide-icon
+            [class.rotate-180]="usersOpen"
+            class="transition-transform duration-200"
+            name="chevronDown"
+            [size]="16"
+          ></lucide-icon>
+        </button>
+        @if (usersOpen) {
+          <div class="ml-10 mt-1 space-y-1">
+            <a
+              routerLink="/users"
+              routerLinkActive="text-blue-600 font-medium bg-blue-50"
+              class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              All Users
+            </a>
+            @if (hasRole('ADMIN') || hasRole('MANAGER')) {
+              <a
+                routerLink="/users/new"
+                routerLinkActive="text-blue-600 font-medium bg-blue-50"
+                class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                New User
+              </a>
+            }
+          </div>
+        }
+      </div>
+
+      <a
+        href="#"
+        class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+      >
+        <lucide-icon name="settings" class="mr-3" [size]="20"></lucide-icon>
+        <span class="font-medium">Settings</span>
+      </a>
+    </nav>
+
+    @if (isAuthenticated() && currentUser) {
+      <div class="mt-auto pt-4 border-t border-gray-200">
+        <div class="flex items-center p-3 rounded-lg bg-gray-50">
+          <div
+            class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shrink-0"
+          >
+            {{ getInitials(currentUser.name) }}
+          </div>
+
+          <div class="ml-3 flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 truncate">
+              {{ currentUser.name }}
+            </p>
+            <p class="text-xs text-gray-500 truncate">
+              {{ currentUser.email }}
+            </p>
+          </div>
+
+          <button
+            (click)="logout()"
+            class="ml-2 p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            title="Logout"
+          >
+            <lucide-icon name="logOut" [size]="18"></lucide-icon>
+          </button>
+        </div>
+
+        @if (currentUser.roles && currentUser.roles.length > 0) {
+          <div class="flex flex-wrap gap-1 mt-3">
+            @for (role of currentUser.roles; track role) {
+              <span
+                class="px-2 py-1 text-xs font-semibold rounded-full"
+                [class.bg-red-100]="role === 'ADMIN'"
+                [class.text-red-800]="role === 'ADMIN'"
+                [class.bg-blue-100]="role === 'MANAGER'"
+                [class.text-blue-800]="role === 'MANAGER'"
+                [class.bg-green-100]="role === 'USER'"
+                [class.text-green-800]="role === 'USER'"
+              >
+                {{ role }}
+              </span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (!isAuthenticated()) {
+      <div class="mt-auto pt-4 border-t border-gray-200">
+        <a
+          routerLink="/login"
+          class="flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <lucide-icon name="logInIcon" class="mr-2" [size]="18"></lucide-icon>
+          <span class="font-medium">Login</span>
+        </a>
+      </div>
+    }
+  </div>
+</aside>

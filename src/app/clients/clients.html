@@ -1,0 +1,131 @@
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="max-w-7xl mx-auto px-4">
+    <div class="mb-8 flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900">Clients</h1>
+        <p class="text-gray-600 mt-2">Manage all client companies in the system</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 p-4">
+      <div class="flex flex-col md:flex-row gap-4">
+        <div class="flex-1">
+          <div class="relative">
+            <input
+              type="text"
+              [(ngModel)]="searchTerm"
+              (keyup.enter)="onSearch()"
+              placeholder="Search by name, company, or email..."
+              class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <select
+          [(ngModel)]="selectedStatus"
+          (change)="onStatusChange()"
+          class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          @for (option of statusOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (error) {
+      <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+        <div class="flex items-center">
+          <i class="fas fa-exclamation-circle mr-2"></i>
+          <span>{{ error }}</span>
+        </div>
+      </div>
+    }
+
+    @if (loading) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-pulse">
+            <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div class="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
+            <div class="h-3 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        }
+      </div>
+    } @else if (clients.length === 0) {
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <i class="fas fa-building text-6xl text-gray-300 mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">No clients found</h3>
+        <p class="text-gray-600">Try adjusting your search or filters</p>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (client of clients; track client.clientId) {
+          <div
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200 cursor-pointer"
+            (click)="viewClient(client.clientId)"
+          >
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center">
+                <div>
+                  <h3 class="text-lg font-semibold text-gray-900">{{ client.name }}</h3>
+                  <p class="text-sm text-gray-600">{{ client.company }}</p>
+                </div>
+              </div>
+              <span
+                class="px-3 py-1 text-xs font-semibold rounded-full"
+                [class]="getStatusBadgeClass(client.status)"
+              >
+                {{ client.status }}
+              </span>
+            </div>
+
+            <div class="space-y-2 mb-4">
+              <div class="flex items-center text-sm text-gray-600">
+                <i class="fas fa-envelope w-5 text-gray-400"></i>
+                <span class="ml-2 truncate">{{ client.email }}</span>
+              </div>
+              <div class="flex items-center text-sm text-gray-600">
+                <i class="fas fa-phone w-5 text-gray-400"></i>
+                <span class="ml-2">{{ client.phone }}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+              <div class="flex items-center text-sm text-gray-600">
+                <i class="fas fa-users mr-2 text-gray-400"></i>
+                <span>{{ client.employees?.length || 0 }} employees</span>
+              </div>
+              <div class="flex items-center text-sm text-gray-600">
+                <i class="fas fa-ticket-alt mr-2 text-gray-400"></i>
+                <span>{{ client.ticketIds?.length || 0 }} tickets</span>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <div class="flex items-center justify-between text-xs text-gray-500">
+                <span>
+                  <i class="fas fa-calendar-alt mr-1"></i>
+                  Created: {{ formatDate(client.createdAt) }}
+                </span>
+                <div class="text-blue-600 hover:text-blue-700 font-medium cursor-pointer">
+                  <a (click)="viewClient(client.clientId)">View Details</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (!loading && clients.length > 0) {
+      <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="flex items-center justify-between text-sm text-gray-700">
+          <span>
+            Showing <span class="font-semibold">{{ clients.length }}</span> client(s)
+          </span>
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,199 @@
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div
+    class="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between"
+  >
+    <h3 class="text-lg font-semibold text-gray-800">Users</h3>
+
+    <div class="flex items-center mt-3 sm:mt-0 space-x-4">
+      <div class="relative">
+        <lucide-icon
+          name="Search"
+          size="16"
+          class="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400"
+        ></lucide-icon>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (keyup.enter)="onSearch()"
+          placeholder="Search name, email, job title"
+          class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-auto"
+        />
+      </div>
+
+      @if (hasRole('ADMIN')) {
+        <select
+          [(ngModel)]="selectedClientId"
+          (change)="onClientChange()"
+          class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="ALL">All Clients</option>
+          @for (client of clients; track client.clientId) {
+            <option [value]="client.clientId">{{ client.name }}</option>
+          }
+        </select>
+      }
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+          >
+            USER ID
+          </th>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+          >
+            NAME
+          </th>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+          >
+            JOB TITLE
+          </th>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+          >
+            EMAIL
+          </th>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+          >
+            CLIENT
+          </th>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+          >
+            ROLE
+          </th>
+          <th
+            scope="col"
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody id="userTableBody" class="bg-white divide-y divide-gray-200">
+        @if (loading) {
+          <tr>
+            <td colspan="7" class="px-6 py-4 text-center">
+              <div class="flex items-center justify-center">
+                <lucide-angular
+                  name="loaderCircleIcon"
+                  class="animate-spin mx-auto mt-2"
+                ></lucide-angular>
+                <span class="text-gray-500">Loading users...</span>
+              </div>
+            </td>
+          </tr>
+        }
+
+        @if (error && !loading) {
+          <tr>
+            <td colspan="7" class="px-6 py-4 text-center">
+              <div class="text-red-500">{{ error }}</div>
+            </td>
+          </tr>
+        }
+
+        @if (!loading && !error) {
+          @for (user of users; track user.userId) {
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-blue-600">#{{ user.userId }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">
+                  {{ user.name }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">
+                  {{ user.jobTitle }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-blue-600">
+                  {{ user.email }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">
+                  {{ user.clientName || ' ' }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex flex-wrap gap-1">
+                  @for (role of user.roles; track role) {
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full">
+                      {{ role }}
+                    </span>
+                  }
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <a (click)="viewUser(user.userId)" class="text-blue-600 hover:text-blue-900 mr-3">
+                  View
+                </a>
+              </td>
+            </tr>
+          }
+        }
+
+        @if (!loading && !error && users.length === 0) {
+          <tr>
+            <td colspan="7" class="px-6 py-4 text-center">
+              <div class="text-gray-500">
+                <i class="fas fa-users text-4xl mb-2"></i>
+                <p>No users found</p>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+    <div class="text-sm text-gray-700">
+      @if (totalElements == 0) {
+        No tickets found
+      }
+    </div>
+
+    <div class="flex space-x-2">
+      <button
+        (click)="previousPage()"
+        [disabled]="currentPage === 0"
+        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+      >
+        <lucide-angular name="chevronLeft" [size]="16"></lucide-angular>
+        Previous
+      </button>
+
+      <div class="flex items-center px-4 py-2 text-sm text-gray-700">
+        Page <span class="font-medium mx-1">{{ currentPage + 1 }}</span> of
+        <span class="font-medium ml-1">{{ totalPages || 1 }}</span>
+      </div>
+
+      <button
+        (click)="nextPage()"
+        [disabled]="currentPage >= totalPages - 1"
+        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+      >
+        Next
+        <lucide-angular name="chevronRight" [size]="16"></lucide-angular>
+      </button>
+    </div>
+  </div>
+</div>
