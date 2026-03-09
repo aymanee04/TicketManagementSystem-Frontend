@@ -7,11 +7,12 @@ import { CreateTicketRequest } from '../../models/ticket.model';
 import { User } from '../../models/user.model';
 import { UsersService } from '../../services/users';
 import { AuthService } from '../../services/auth';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
   selector: 'app-new-tickets',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule],
   templateUrl: './new-tickets.html',
   styleUrl: './new-tickets.css',
 })
@@ -88,8 +89,7 @@ export class NewTickets implements OnInit {
     const request: CreateTicketRequest = {
       title: formValue.title,
       description: formValue.description,
-      createdById: this.currentUser.userId,
-      clientIds: [this.currentUser.clientId]
+      createdById: this.currentUser.userId
     };
 
     this.ticketsService.createTicket(request).subscribe({

@@ -16,7 +16,7 @@ export interface Ticket {
     assignedToName?: string;
     validatedById?: number;
     attachments: Attachment[];
-    clientIds: number[];
+    clientIds: number;
     clientName: string[];
 }
 
@@ -24,5 +24,4 @@ export interface CreateTicketRequest {
     title: string;
     description: string;
     createdById: number;
-    clientIds: number[];
 }

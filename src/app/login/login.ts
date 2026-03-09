@@ -54,23 +54,51 @@ export class Login {
 
     this.loading = true;
     this.error = null;
+    this.errorType = null;
 
     const { email, password } = this.loginForm.value;
 
-    this.authService.login(email, password).subscribe({
-      next: () => {
-        console.log('Login successful');
-        this.loading = false;
+    console.log('Login component: Submitting login for', email);
 
-        this.router.navigate(['/']);
+    this.authService.login(email, password).subscribe({
+      next: (response) => {
+        console.log('Login component: Login successful', response);
+        this.loading = false;
+        this.router.navigate(['/admin']);
       },
       error: (err) => {
+        console.error('Login component: Login error', err);
+
         this.authService.clearAuth();
-        console.error('Login error:', err);
+
         this.loading = false;
+
+        if (err.error && err.error.message) {
+          this.error = err.error.message;
+          this.errorType = err.error.type || null;
+        } else if (err.status === 403) {
+          this.error = err.error?.message || 'Your account has been disabled. Please contact support.';
+          this.errorType = 'ACCOUNT_DISABLED';
+        } else if (err.status === 401) {
+          this.error = err.error?.message || 'Invalid email or password';
+          this.errorType = 'BAD_CREDENTIALS';
+        } else if (err.status === 0) {
+          this.error = 'Cannot connect to server. Please check your connection.';
+          this.errorType = 'CONNECTION_ERROR';
+        } else {
+          this.error = 'An error occurred. Please try again.';
+          this.errorType = 'UNKNOWN_ERROR';
+        }
+
+        console.log('Error displayed:', this.error);
+
         this.cdr.detectChanges();
       }
     });
+  }
+  dismissError(): void {
+    this.error = null;
+    this.cdr.detectChanges();
   }
 
   get email() {

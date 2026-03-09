@@ -162,7 +162,7 @@ export class Tickets implements OnInit {
   }
 
   viewTicket(ticketId: number): void {
-    this.router.navigate(['/admin/tickets', ticketId]);
+    this.router.navigate(['/tickets', ticketId]);
   }
 
   handleSortByDate(): void {

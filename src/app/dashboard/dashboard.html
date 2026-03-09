@@ -1,14 +1,9 @@
-<div class="min-h-screen bg-gray-50">
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="min-h-screen bg-linear-to-br py-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">
-        @if (currentUser) {
-          Welcome back, {{ currentUser.name }}!
-        } @else {
-          Dashboard
-        }
-      </h1>
-      <p class="text-gray-600 mt-1">Here's what's happening with your ticket system</p>
+      <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+      <p class="text-gray-600 mt-1 capitalize">Welcome back, {{ currentUser?.name || 'User' }}!</p>
     </div>
 
     @if (loading) {
@@ -22,297 +17,249 @@
     } @else {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div
-          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200"
+          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow animate-fadeIn"
         >
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-600 mb-1">Total Tickets</p>
-              <p class="text-4xl font-bold text-gray-900">{{ systemStats.totalTickets }}</p>
-              <p class="text-xs text-gray-500 mt-2">All time</p>
+              <p class="text-sm font-medium text-gray-600">Total Tickets</p>
+              <p class="text-3xl font-bold text-gray-900 mt-2">{{ systemStats.totalTickets }}</p>
             </div>
-            <div class="p-4 bg-blue-50 rounded-full">
-              <lucide-icon name="ticketsIcon" [size]="32" class="text-blue-600"></lucide-icon>
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+              <lucide-icon name="ticketIcon" [size]="24" class="text-blue-600"></lucide-icon>
             </div>
           </div>
         </div>
 
         <div
-          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200"
+          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow animate-fadeIn"
+          style="animation-delay: 0.1s"
         >
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-600 mb-1">Active Tickets</p>
-              <p class="text-4xl font-bold text-yellow-600">{{ systemStats.activeTickets }}</p>
-              <p class="text-xs text-gray-500 mt-2">In progress</p>
+              <p class="text-sm font-medium text-gray-600">Active Tickets</p>
+              <p class="text-3xl font-bold text-yellow-600 mt-2">{{ systemStats.activeTickets }}</p>
             </div>
-            <div class="p-4 bg-yellow-50 rounded-full">
-              <lucide-icon name="clock" [size]="32" class="text-yellow-600"></lucide-icon>
+            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+              <lucide-icon name="clock" [size]="24" class="text-yellow-600"></lucide-icon>
             </div>
           </div>
         </div>
 
         <div
-          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200"
+          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow animate-fadeIn"
+          style="animation-delay: 0.2s"
         >
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-600 mb-1">Resolved</p>
-              <p class="text-4xl font-bold text-green-600">{{ systemStats.resolvedTickets }}</p>
-              <p class="text-xs text-gray-500 mt-2">Completed</p>
+              <p class="text-sm font-medium text-gray-600">Resolved</p>
+              <p class="text-3xl font-bold text-green-600 mt-2">
+                {{ systemStats.resolvedTickets }}
+              </p>
             </div>
-            <div class="p-4 bg-green-50 rounded-full">
-              <lucide-icon name="circleCheck" [size]="32" class="text-green-600"></lucide-icon>
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+              <lucide-icon name="circleCheck" [size]="24" class="text-green-600"></lucide-icon>
             </div>
           </div>
         </div>
 
         <div
-          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg transition-all duration-200"
+          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow animate-fadeIn"
+          style="animation-delay: 0.3s"
         >
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-600 mb-1">Companies</p>
-              <p class="text-4xl font-bold text-purple-600">{{ systemStats.totalClients }}</p>
-              <p class="text-xs text-gray-500 mt-2">Active clients</p>
+              <p class="text-sm font-medium text-gray-600">Companies</p>
+              <p class="text-3xl font-bold text-indigo-600 mt-2">{{ systemStats.totalClients }}</p>
             </div>
-            <div class="p-4 bg-purple-50 rounded-full">
-              <lucide-icon name="building2" [size]="32" class="text-purple-600"></lucide-icon>
+            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+              <lucide-icon name="building2" [size]="24" class="text-indigo-600"></lucide-icon>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div class="mb-6">
-            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <lucide-icon name="chartBar" [size]="24" class="text-blue-600"></lucide-icon>
-              Tickets by Company
-            </h2>
-            <p class="text-sm text-gray-600 mt-1">Distribution of tickets across all clients</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div
+          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-fadeIn"
+          style="animation-delay: 0.4s"
+        >
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-gray-900">Tickets by Company</h2>
+            <lucide-icon name="chartColumn" [size]="20" class="text-gray-400"></lucide-icon>
           </div>
 
           @if (companyStats.length === 0) {
-            <div class="text-center py-12 text-gray-500">
-              <lucide-icon
-                name="chartPie"
-                [size]="64"
-                class="mx-auto mb-4 text-gray-300"
-              ></lucide-icon>
-              <p class="font-medium">No data yet</p>
-              <p class="text-sm mt-1">Tickets will appear here once created</p>
+            <div class="flex flex-col items-center justify-center h-64 text-gray-500">
+              <lucide-icon name="inbox" [size]="48" class="mb-3 text-gray-300"></lucide-icon>
+              <p class="text-sm">No data available</p>
             </div>
           } @else {
-            <div class="mt-6">
-              <div class="flex items-end justify-between gap-3 h-64">
-                @for (company of companyStats; track company.clientName) {
-                  <div class="flex-1 flex flex-col items-center gap-2 h-full">
-                    <div
-                      class="w-30 h-full bg-gray-100 rounded-t-lg relative group cursor-pointer flex items-end"
-                    >
-                      <div
-                        class="w-30 rounded-t-lg transition-all duration-500 hover:opacity-80"
-                        [style.height.%]="getChartHeight(company.ticketCount)"
-                        [style.background-color]="company.color"
-                      >
-                        <div
-                          class="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <div
-                            class="bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap"
+            <div class="h-80">
+              <canvas #companyChartCanvas></canvas>
+            </div>
+          }
+        </div>
+
+        <div
+          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-fadeIn"
+          style="animation-delay: 0.5s"
+        >
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-gray-900">Status Distribution</h2>
+            <lucide-icon name="chartPie" [size]="20" class="text-gray-400"></lucide-icon>
+          </div>
+
+          @if (tickets.length === 0) {
+            <div class="flex flex-col items-center justify-center h-64 text-gray-500">
+              <lucide-icon name="inbox" [size]="48" class="mb-3 text-gray-300"></lucide-icon>
+              <p class="text-sm">No tickets yet</p>
+            </div>
+          } @else {
+            <div class="h-80 flex items-center justify-center">
+              <canvas #statusChartCanvas></canvas>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div
+          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-fadeIn"
+          style="animation-delay: 0.6s"
+        >
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">System Overview</h2>
+
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Total Users</span>
+              <span class="font-semibold text-gray-900">{{ systemStats.totalUsers }}</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Total Clients</span>
+              <span class="font-semibold text-gray-900">{{ systemStats.totalClients }}</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-sm text-gray-600">Resolution Rate</span>
+              <div class="flex items-center gap-2">
+                <div class="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-green-500 rounded-full transition-all duration-500"
+                    [style.width.%]="systemStats.resolutionRate"
+                  ></div>
+                </div>
+                <span class="font-semibold text-gray-900">{{ systemStats.resolutionRate }}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-6 border-t border-gray-200 space-y-2">
+            <button
+              (click)="viewAllTickets()"
+              class="w-full px-4 py-2 text-sm text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              View All Tickets
+            </button>
+            <button
+              (click)="viewClients()"
+              class="w-full px-4 py-2 text-sm text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+            >
+              Manage Clients
+            </button>
+          </div>
+        </div>
+
+        <div
+          class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-fadeIn"
+          style="animation-delay: 0.7s"
+        >
+          <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <lucide-icon name="clock" [size]="24" class="text-blue-600"></lucide-icon>
+              Recent Activity
+            </h2>
+          </div>
+
+          <div class="p-4 sm:p-6">
+            @if (recentTickets.length === 0) {
+              <div class="text-center py-12 text-gray-500">
+                <lucide-icon
+                  name="inbox"
+                  [size]="64"
+                  class="mx-auto mb-4 text-gray-300"
+                ></lucide-icon>
+                <p class="font-medium">No recent tickets</p>
+                <p class="text-sm mt-1">Create your first ticket to get started</p>
+              </div>
+            } @else {
+              <div class="space-y-3">
+                @for (ticket of recentTickets; track ticket.ticketId) {
+                  <div
+                    (click)="viewTicket(ticket.ticketId)"
+                    class="p-3 sm:p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                  >
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <span class="text-blue-600 font-semibold text-sm shrink-0"
+                            >#{{ ticket.ticketId }}</span
                           >
-                            {{ company.ticketCount }} tickets
-                          </div>
+                          <span
+                            class="px-2 py-0.5 text-xs font-semibold rounded-full shrink-0"
+                            [class]="getStatusBadgeClass(ticket.status)"
+                          >
+                            {{ ticket.status }}
+                          </span>
+                        </div>
+
+                        <h3 class="font-semibold text-gray-900 mb-1 truncate">
+                          {{ ticket.title }}
+                        </h3>
+                        <p class="text-sm text-gray-600 line-clamp-1">{{ ticket.description }}</p>
+
+                        <div
+                          class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-gray-500"
+                        >
+                          <span class="flex items-center gap-1">
+                            <lucide-icon name="user" [size]="12"></lucide-icon>
+                            {{ ticket.createdByName }}
+                          </span>
+                          <span class="flex items-center gap-1">
+                            <lucide-icon name="clock" [size]="12"></lucide-icon>
+                            {{ formatDate(ticket.createdAt) }}
+                          </span>
+                          @if (ticket.clientName && ticket.clientName.length > 0) {
+                            <span class="flex items-center gap-1">
+                              <lucide-icon name="building2" [size]="12"></lucide-icon>
+                              {{ ticket.clientName[0] }}
+                            </span>
+                          }
                         </div>
                       </div>
-                    </div>
-
-                    <div class="text-center">
-                      <p class="text-xs font-semibold text-gray-700 truncate max-w-30">
-                        {{ company.clientName }}
-                      </p>
-                      <p class="text-xs text-gray-500">{{ company.ticketCount }}</p>
+                      <lucide-icon
+                        name="chevronRight"
+                        [size]="18"
+                        class="text-gray-400 shrink-0 mt-1"
+                      ></lucide-icon>
                     </div>
                   </div>
                 }
               </div>
 
-              <div class="mt-6 pt-6 border-t border-gray-200">
-                <div class="flex flex-wrap gap-4">
-                  @for (company of companyStats.slice(0, 4); track company.clientName) {
-                    <div class="flex items-center gap-2">
-                      <div
-                        class="w-3 h-3 rounded-full"
-                        [style.background-color]="company.color"
-                      ></div>
-                      <span class="text-sm text-gray-700">{{ company.clientName }}</span>
-                      <span class="text-sm text-gray-500">({{ company.ticketCount }})</span>
-                    </div>
-                  }
-                  @if (companyStats.length > 4) {
-                    <span class="text-sm text-gray-500">+{{ companyStats.length - 4 }} more</span>
-                  }
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2 mb-6">
-            <lucide-icon name="activity" [size]="24" class="text-green-600"></lucide-icon>
-            System Overview
-          </h2>
-
-          <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div class="flex items-center gap-3">
-                <div class="p-2 bg-blue-100 rounded-lg">
-                  <lucide-icon name="users" [size]="20" class="text-blue-600"></lucide-icon>
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-gray-900">Total Users</p>
-                  <p class="text-xs text-gray-600">Active members</p>
-                </div>
-              </div>
-              <p class="text-2xl font-bold text-gray-900">{{ systemStats.totalUsers }}</p>
-            </div>
-
-            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div class="flex items-center gap-3">
-                <div class="p-2 bg-purple-100 rounded-lg">
-                  <lucide-icon name="building2" [size]="20" class="text-purple-600"></lucide-icon>
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-gray-900">Total Clients</p>
-                  <p class="text-xs text-gray-600">Companies</p>
-                </div>
-              </div>
-              <p class="text-2xl font-bold text-gray-900">{{ systemStats.totalClients }}</p>
-            </div>
-
-            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div class="flex items-center gap-3">
-                <div class="p-2 bg-green-100 rounded-lg">
-                  <lucide-icon name="trendingUp" [size]="20" class="text-green-600"></lucide-icon>
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-gray-900">Resolution Rate</p>
-                  <p class="text-xs text-gray-600">Resolved / Total</p>
-                </div>
-              </div>
-              <p class="text-2xl font-bold text-green-600">
-                {{
-                  systemStats.totalTickets > 0
-                    ? ((systemStats.resolvedTickets / systemStats.totalTickets) * 100).toFixed(0)
-                    : 0
-                }}%
-              </p>
-            </div>
-
-            <div class="pt-4 border-t border-gray-200">
-              <p class="text-sm font-semibold text-gray-900 mb-3">Quick Actions</p>
-              <div class="space-y-2">
+              <div class="mt-6 text-center">
                 <a
                   routerLink="/tickets"
-                  class="flex items-center gap-2 p-3 text-sm text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                  class="text-blue-600 hover:text-blue-700 font-medium text-sm inline-flex items-center gap-1"
                 >
-                  <lucide-icon name="list" [size]="18"></lucide-icon>
-                  View All Tickets
-                </a>
-                <a
-                  routerLink="/clients"
-                  class="flex items-center gap-2 p-3 text-sm text-gray-700 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  <lucide-icon name="building2" [size]="18"></lucide-icon>
-                  Manage Clients
+                  View all tickets
+                  <lucide-icon name="arrowRight" [size]="16"></lucide-icon>
                 </a>
               </div>
-            </div>
+            }
           </div>
         </div>
       </div>
-
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-          <h2 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <lucide-icon name="clock" [size]="24" class="text-blue-600"></lucide-icon>
-            Recent Activity
-          </h2>
-        </div>
-
-        <div class="p-6">
-          @if (recentTickets.length === 0) {
-            <div class="text-center py-12 text-gray-500">
-              <lucide-icon
-                name="inbox"
-                [size]="64"
-                class="mx-auto mb-4 text-gray-300"
-              ></lucide-icon>
-              <p class="font-medium">No recent tickets</p>
-              <p class="text-sm mt-1">Create your first ticket to get started</p>
-            </div>
-          } @else {
-            <div class="space-y-3">
-              @for (ticket of recentTickets; track ticket.ticketId) {
-                <div
-                  (click)="viewTicket(ticket.ticketId)"
-                  class="p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
-                >
-                  <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                      <div class="flex items-center gap-2 mb-2">
-                        <span class="text-blue-600 font-semibold text-sm"
-                          >#{{ ticket.ticketId }}</span
-                        >
-                        <span
-                          class="px-2 py-1 text-xs font-semibold rounded-full"
-                          [class]="getStatusBadgeClass(ticket.status)"
-                        >
-                          {{ ticket.status }}
-                        </span>
-                      </div>
-                      <h3 class="font-semibold text-gray-900 mb-1">{{ ticket.title }}</h3>
-                      <p class="text-sm text-gray-600 line-clamp-1">{{ ticket.description }}</p>
-                      <div class="flex items-center gap-4 mt-3 text-xs text-gray-500">
-                        <span class="flex items-center gap-1">
-                          <lucide-icon name="user" [size]="14"></lucide-icon>
-                          {{ ticket.createdByName }}
-                        </span>
-                        <span class="flex items-center gap-1">
-                          <lucide-icon name="clock" [size]="14"></lucide-icon>
-                          {{ formatDate(ticket.createdAt) }}
-                        </span>
-                        @if (ticket.clientName && ticket.clientName.length > 0) {
-                          <span class="flex items-center gap-1">
-                            <lucide-icon name="building2" [size]="14"></lucide-icon>
-                            {{ ticket.clientName[0] }}
-                          </span>
-                        }
-                      </div>
-                    </div>
-                    <lucide-icon
-                      name="chevronRight"
-                      [size]="20"
-                      class="text-gray-400 ml-4"
-                    ></lucide-icon>
-                  </div>
-                </div>
-              }
-            </div>
-
-            <div class="mt-6 text-center">
-              <a
-                routerLink="/tickets"
-                class="text-blue-600 hover:text-blue-700 font-medium text-sm inline-flex items-center gap-1"
-              >
-                View all tickets
-                <lucide-icon name="arrowRight" [size]="16"></lucide-icon>
-              </a>
-            </div>
-          }
-        </div>
-      </div>
     }
-  </main>
+  </div>
 </div>

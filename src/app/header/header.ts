@@ -57,7 +57,9 @@ export class Header implements OnInit {
     this.loadNotifications();
   }
 
-
+  hasRole(role: string): boolean {
+    return this.authService.hasRole(role);
+  }
 
   loadCurrentUser(): void {
     this.authService.currentUser$.subscribe(user => {
@@ -191,5 +193,8 @@ export class Header implements OnInit {
   }
   navigateToNewTicket(): void {
     this.router.navigate(['/tickets/new']);
+  }
+  navigateToNewIncidentTicket(): void {
+    this.router.navigate(['/tickets/new-incident']);
   }
 }

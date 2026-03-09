@@ -1,179 +1,217 @@
-<aside
-  class="sidebar w-64 bg-white border-r border-gray-200 flex flex-col md:static absolute inset-y-0 left-0 z-30"
+<!-- Toggle Button — always visible, slides with the sidebar -->
+<button
+  (click)="toggleSidebar()"
+  class="fixed top-4 z-50 p-2 bg-white border border-gray-200 rounded-lg shadow-sm text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition-all duration-300"
+  [style.left]="sidebarOpen ? '220px' : '16px'"
+  aria-label="Toggle sidebar"
 >
-  <div class="p-6 flex flex-col h-full">
-    <div class="flex items-center mb-10">
+  <lucide-icon [name]="sidebarOpen ? 'panelLeftClose' : 'panelLeftOpen'" [size]="20"></lucide-icon>
+</button>
+
+<aside
+  class="bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 shrink-0 transition-all duration-300 ease-in-out"
+  [style.width]="sidebarOpen ? '256px' : '64px'"
+>
+  <div class="flex flex-col h-full w-full overflow-y-auto overflow-x-hidden">
+    <!-- Logo -->
+    <div
+      class="flex items-center py-6 mb-4 mt-1"
+      [class.px-3]="sidebarOpen"
+      [class.justify-center]="!sidebarOpen"
+      [class.px-0]="!sidebarOpen"
+    >
       <div
-        class="w-10 h-10 bg-linear-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-md"
-      ></div>
-      <h1 class="text-xl font-bold text-gray-800 ml-3">TicketFlow</h1>
+        class="w-10 h-10 bg-linear-to-br rounded-lg flex items-center justify-center shadow-md shrink-0"
+      >
+        <img src="images/TicketFlow.png" class="h-full w-full object-cover" alt="logo" />
+      </div>
+      @if (sidebarOpen) {
+        <h1 class="text-xl font-bold text-gray-800 ml-3 whitespace-nowrap">TicketFlow</h1>
+      }
     </div>
 
-    <nav class="flex-1 space-y-1">
+    <nav class="flex-1 space-y-1 px-2">
+      <!-- Dashboard -->
       <a
         routerLink="/"
         routerLinkActive="bg-blue-50 text-blue-600 border-r-4 border-blue-600"
         [routerLinkActiveOptions]="{ exact: true }"
-        class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+        class="flex items-center py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+        [class.px-2]="sidebarOpen"
+        [class.justify-center]="!sidebarOpen"
+        [title]="sidebarOpen ? '' : 'Dashboard'"
       >
-        <lucide-icon name="layoutDashboard" class="mr-3" [size]="20"></lucide-icon>
-        <span class="font-medium">Dashboard</span>
+        <lucide-icon name="layoutDashboard" class="shrink-0" [size]="20"></lucide-icon>
+        @if (sidebarOpen) {
+          <span class="font-medium ml-3 whitespace-nowrap">Dashboard</span>
+        }
       </a>
 
+      <!-- Tickets -->
       <a
         routerLink="/tickets"
         routerLinkActive="bg-blue-50 text-blue-600 border-r-4 border-blue-600"
-        class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+        class="flex items-center py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+        [class.px-2]="sidebarOpen"
+        [class.justify-center]="!sidebarOpen"
+        [title]="sidebarOpen ? '' : 'Tickets'"
       >
-        <lucide-icon name="ticketsIcon" class="mr-3" [size]="20"></lucide-icon>
-        <span class="font-medium">Tickets</span>
+        <lucide-icon name="ticketsIcon" class="shrink-0" [size]="20"></lucide-icon>
+        @if (sidebarOpen) {
+          <span class="font-medium ml-3 whitespace-nowrap">Tickets</span>
+        }
       </a>
 
-      <!-- Clients Dropdown -->
+      <!-- Clients (ADMIN only) -->
       @if (hasRole('ADMIN')) {
         <div>
           <button
             type="button"
-            (click)="toggleClients()"
-            class="w-full flex items-center justify-between px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            (click)="sidebarOpen ? toggleClients() : openSidebarAndExpand('clients')"
+            class="w-full flex items-center py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+            [class.px-2]="sidebarOpen"
+            [class.justify-center]="!sidebarOpen"
+            [title]="sidebarOpen ? '' : 'Clients'"
           >
-            <div class="flex items-center">
-              <lucide-icon name="building2" class="mr-3" [size]="20"></lucide-icon>
-              <span class="font-medium">Clients</span>
-            </div>
-            <lucide-icon
-              [class.rotate-180]="clientsOpen"
-              class="transition-transform duration-200"
-              name="chevronDown"
-              [size]="16"
-            ></lucide-icon>
+            <lucide-icon name="building2" class="shrink-0" [size]="20"></lucide-icon>
+            @if (sidebarOpen) {
+              <span class="font-medium ml-3 whitespace-nowrap flex-1 text-left">Clients</span>
+              <lucide-icon
+                [class.rotate-180]="clientsOpen"
+                class="transition-transform duration-200 shrink-0"
+                name="chevronDown"
+                [size]="16"
+              ></lucide-icon>
+            }
           </button>
-          @if (clientsOpen) {
-            <div class="ml-10 mt-1 space-y-1">
+          @if (clientsOpen && sidebarOpen) {
+            <div class="ml-9 mt-1 space-y-1">
               <a
                 routerLink="/clients"
                 routerLinkActive="text-blue-600 font-medium bg-blue-50"
-                class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+                >All Clients</a
               >
-                All Clients
-              </a>
               @if (hasRole('ADMIN')) {
                 <a
                   routerLink="/clients/new"
                   routerLinkActive="text-blue-600 font-medium bg-blue-50"
-                  class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                  class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+                  >New Client</a
                 >
-                  New Client
-                </a>
               }
             </div>
           }
         </div>
       }
-      <!-- Users Dropdown -->
+
+      <!-- Users -->
       <div>
         <button
           type="button"
-          (click)="toggleUsers()"
-          class="w-full flex items-center justify-between px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          (click)="sidebarOpen ? toggleUsers() : openSidebarAndExpand('users')"
+          class="w-full flex items-center py-3 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+          [class.px-2]="sidebarOpen"
+          [class.justify-center]="!sidebarOpen"
+          [title]="sidebarOpen ? '' : 'Users'"
         >
-          <div class="flex items-center">
-            <lucide-icon name="users" class="mr-3" [size]="20"></lucide-icon>
-            <span class="font-medium">Users</span>
-          </div>
-          <lucide-icon
-            [class.rotate-180]="usersOpen"
-            class="transition-transform duration-200"
-            name="chevronDown"
-            [size]="16"
-          ></lucide-icon>
+          <lucide-icon name="users" class="shrink-0" [size]="20"></lucide-icon>
+          @if (sidebarOpen) {
+            <span class="font-medium ml-3 whitespace-nowrap flex-1 text-left">Users</span>
+            <lucide-icon
+              [class.rotate-180]="usersOpen"
+              class="transition-transform duration-200 shrink-0"
+              name="chevronDown"
+              [size]="16"
+            ></lucide-icon>
+          }
         </button>
-        @if (usersOpen) {
-          <div class="ml-10 mt-1 space-y-1">
+        @if (usersOpen && sidebarOpen) {
+          <div class="ml-9 mt-1 space-y-1">
             <a
               routerLink="/users"
               routerLinkActive="text-blue-600 font-medium bg-blue-50"
-              class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+              class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+              >All Users</a
             >
-              All Users
-            </a>
-            @if (hasRole('ADMIN') || hasRole('MANAGER')) {
+            @if (hasRole('ADMIN')) {
               <a
                 routerLink="/users/new"
                 routerLinkActive="text-blue-600 font-medium bg-blue-50"
-                class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+                class="block px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+                >New User</a
               >
-                New User
-              </a>
             }
           </div>
         }
       </div>
-
-      <a
-        href="#"
-        class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-      >
-        <lucide-icon name="settings" class="mr-3" [size]="20"></lucide-icon>
-        <span class="font-medium">Settings</span>
-      </a>
     </nav>
 
+    <!-- Authenticated user footer -->
     @if (isAuthenticated() && currentUser) {
-      <div class="mt-auto pt-4 border-t border-gray-200">
-        <div class="flex items-center p-3 rounded-lg bg-gray-50">
+      <div class="mt-auto pt-4 border-t border-gray-200 px-2 pb-4">
+        <div
+          class="flex items-center p-2 rounded-lg bg-gray-50"
+          [class.justify-center]="!sidebarOpen"
+        >
           <div
             class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold shrink-0"
           >
-            {{ getInitials(currentUser.name) }}
+            <a routerLink="/user/profile">{{ getInitials(currentUser.name) }}</a>
           </div>
-
-          <div class="ml-3 flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-900 truncate">
-              {{ currentUser.name }}
-            </p>
-            <p class="text-xs text-gray-500 truncate">
-              {{ currentUser.email }}
-            </p>
-          </div>
-
-          <button
-            (click)="logout()"
-            class="ml-2 p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            title="Logout"
-          >
-            <lucide-icon name="logOut" [size]="18"></lucide-icon>
-          </button>
+          @if (sidebarOpen) {
+            <div class="ml-3 flex-1 min-w-0">
+              <p
+                class="text-sm font-semibold text-gray-900 truncate hover:text-blue-600 transition-colors cursor-pointer"
+                routerLink="/user/profile"
+              >
+                {{ currentUser.name }}
+              </p>
+              <p class="text-xs text-gray-500 truncate">{{ currentUser.email }}</p>
+            </div>
+            <button
+              (click)="logout()"
+              class="ml-2 p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+              title="Logout"
+            >
+              <lucide-icon name="logOut" [size]="18"></lucide-icon>
+            </button>
+          }
         </div>
 
-        @if (currentUser.roles && currentUser.roles.length > 0) {
+        @if (sidebarOpen && currentUser.roles && currentUser.roles.length > 0) {
           <div class="flex flex-wrap gap-1 mt-3">
             @for (role of currentUser.roles; track role) {
               <span
-                class="px-2 py-1 text-xs font-semibold rounded-full"
+                class="px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap"
                 [class.bg-red-100]="role === 'ADMIN'"
                 [class.text-red-800]="role === 'ADMIN'"
                 [class.bg-blue-100]="role === 'MANAGER'"
                 [class.text-blue-800]="role === 'MANAGER'"
                 [class.bg-green-100]="role === 'USER'"
                 [class.text-green-800]="role === 'USER'"
+                >{{ role }}</span
               >
-                {{ role }}
-              </span>
             }
           </div>
         }
       </div>
     }
 
+    <!-- Unauthenticated footer -->
     @if (!isAuthenticated()) {
-      <div class="mt-auto pt-4 border-t border-gray-200">
+      <div class="mt-auto pt-4 border-t border-gray-200 px-2 pb-4">
         <a
           routerLink="/login"
-          class="flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          class="flex items-center py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          [class.px-4]="sidebarOpen"
+          [class.justify-center]="!sidebarOpen"
+          [title]="sidebarOpen ? '' : 'Login'"
         >
-          <lucide-icon name="logInIcon" class="mr-2" [size]="18"></lucide-icon>
-          <span class="font-medium">Login</span>
+          <lucide-icon name="logInIcon" class="shrink-0" [size]="18"></lucide-icon>
+          @if (sidebarOpen) {
+            <span class="font-medium ml-2 whitespace-nowrap">Login</span>
+          }
         </a>
       </div>
     }

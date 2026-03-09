@@ -26,12 +26,24 @@ export class TicketsService {
     return this.http.get<Ticket[]>(`${this.backendHost}/api/tickets/status/${status}`);
   }
 
+  public getTicketsByUserId(userId: number): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(`${this.backendHost}/api/tickets/user/${userId}`);
+  }
+
   public getTicketsByClient(clientId: number): Observable<Ticket[]> {
     return this.http.get<Ticket[]>(`${this.backendHost}/api/tickets/client/${clientId}`);
   }
 
   public createTicket(request: CreateTicketRequest): Observable<Ticket> {
     return this.http.post<Ticket>(`${this.backendHost}/api/tickets`, request);
+  }
+
+  createIncident(incident: { title: string; description: string; clientIds: number[] }): Observable<Ticket> {
+    return this.http.post<Ticket>(`${this.backendHost}/api/tickets/incident`, incident);
+  }
+
+  public getTicketsAssignedTo(userId: number): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(`${this.backendHost}/api/tickets/assigned/${userId}`);
   }
 
 

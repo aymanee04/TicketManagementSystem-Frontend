@@ -1,14 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Client, CreateClientRequest } from '../models/client.model';
+import { Client, CreateClientRequest, SuspendClientRequest } from '../models/client.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ClientsService {
+  private backendHost = "http://localhost:8080";
 
-  private backendHost = 'http://localhost:8080';
+
 
   constructor(private http: HttpClient) { }
 
@@ -30,5 +31,19 @@ export class ClientsService {
 
   public getClientsByStatus(status: string): Observable<Client[]> {
     return this.http.get<Client[]>(`${this.backendHost}/api/clients/status/${status}`);
+  }
+
+  public suspendClient(id: number, request: SuspendClientRequest): Observable<Client> {
+    return this.http.put<Client>(
+      `${this.backendHost}/api/clients/${id}/suspend`,
+      request
+    );
+  }
+
+  public reactivateClient(id: number): Observable<Client> {
+    return this.http.put<Client>(
+      `${this.backendHost}/api/clients/${id}/reactivate`,
+      {}
+    );
   }
 }

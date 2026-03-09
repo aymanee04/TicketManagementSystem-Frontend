@@ -13,22 +13,34 @@ import { Login } from './login/login';
 import { Unauthorized } from './unauthorized/unauthorized';
 import { authGuard } from './guards/auth-guard';
 import { roleGuard } from './guards/role-guard';
+import { Profile } from './profile/profile';
+import { NewIncidentTicket } from './tickets/new-incident-ticket/new-incident-ticket';
+import { Layout } from './layout/layout';
 
 export const routes: Routes = [
 
     { path: 'login', component: Login },
     { path: 'unauthorized', component: Unauthorized },
-    //protected routes
-    { path: '', component: Dashboard, canActivate: [authGuard], title: 'Dashboard' },
-    { path: 'clients', component: Clients, canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN'] }, title: 'Clients' },
-    { path: 'clients/new', component: NewClient, canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN'] }, title: 'New Client' },
-    { path: 'clients/:id', component: ClientDetails, canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN'] }, title: 'Client Details' },
-    { path: 'tickets', component: Tickets, canActivate: [authGuard], title: 'Tickets' },
-    { path: 'tickets/new', component: NewTickets, canActivate: [authGuard, roleGuard], data: { roles: ['USER', 'MANAGER'] }, title: 'New Ticket' },
-    { path: 'tickets/:id', component: TicketDetails, canActivate: [authGuard], title: 'Ticket Details' },
-    { path: 'users', component: Users, canActivate: [authGuard], title: 'Users' },
-    { path: "users/new", component: NewUser, canActivate: [authGuard, roleGuard], data: { roles: ['ADMIN', 'MANAGER'] }, title: 'New User' },
-    { path: 'users/:id', component: UserDetails, canActivate: [authGuard], title: 'User Details' },
-    //unknown routes
+
+    {
+        path: '',
+        component: Layout,
+        canActivate: [authGuard],
+        children: [
+            { path: '', component: Dashboard },
+            { path: 'clients', component: Clients, canActivate: [roleGuard], data: { roles: ['ADMIN'] } },
+            { path: 'clients/new', component: NewClient },
+            { path: 'clients/:id', component: ClientDetails, canActivate: [roleGuard], data: { roles: ['ADMIN'] } },
+            { path: 'tickets', component: Tickets },
+            { path: 'tickets/new', component: NewTickets, canActivate: [roleGuard], data: { roles: ['USER', 'MANAGER'] } },
+            { path: 'tickets/new-incident', component: NewIncidentTicket, canActivate: [roleGuard], data: { roles: ['ADMIN'] } },
+            { path: 'tickets/:id', component: TicketDetails },
+            { path: 'user/profile', component: Profile, canActivate: [roleGuard], data: { roles: ['USER', 'MANAGER', 'ADMIN'] } },
+            { path: 'users', component: Users },
+            { path: 'users/new', component: NewUser, canActivate: [roleGuard], data: { roles: ['ADMIN'] } },
+            { path: 'users/:id', component: UserDetails },
+        ]
+    },
+
     { path: '**', redirectTo: '' }
 ];

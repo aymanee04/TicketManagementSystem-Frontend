@@ -83,4 +83,15 @@ export class UsersService {
       `${this.backendHost}/api/users/search`, { params }
     )
   }
+
+  changePassword(userId: number, passwordData: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(
+      `${this.backendHost}/api/users/${userId}/change-password`,
+      passwordData
+    );
+  }
 }

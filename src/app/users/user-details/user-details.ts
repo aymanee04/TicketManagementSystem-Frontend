@@ -86,7 +86,6 @@ export class UserDetails implements OnInit {
   loadTickets(): void {
     this.loadingTickets = true;
 
-    // Load all tickets and filter by this user
     this.ticketsService.getTickets().subscribe({
       next: (data: Ticket[]) => {
         this.createdTickets = data.filter(t => t.createdById === this.userId);

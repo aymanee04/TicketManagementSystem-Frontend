@@ -1,5 +1,5 @@
-<div class="min-h-screen bg-gray-50 py-8">
-  <div class="max-w-6xl mx-auto px-4">
+<div class="min-h-screen bg-gray-50 py-4 sm:py-8">
+  <div class="max-w-6xl mx-auto px-3 sm:px-4">
     @if (loading && !ticket) {
       <div class="flex items-center justify-center h-64">
         <lucide-angular
@@ -9,22 +9,23 @@
         ></lucide-angular>
       </div>
     } @else if (ticket) {
-      <div class="mb-6 flex items-center justify-between">
+      <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div class="flex items-center">
           <button
             (click)="goBack()"
-            class="mr-4 p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            class="mr-3 p-2 hover:bg-gray-200 rounded-lg transition-colors shrink-0"
           >
             <lucide-angular name="arrowLeft"></lucide-angular>
           </button>
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900">Ticket #{{ ticket.ticketId }}</h1>
-            <p class="text-gray-600 mt-1">{{ ticket.title }}</p>
+          <div class="min-w-0">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+              Ticket #{{ ticket.ticketId }}
+            </h1>
+            <p class="text-gray-600 mt-1 truncate">{{ ticket.title }}</p>
           </div>
         </div>
-
         <span
-          class="px-4 py-2 text-sm font-semibold rounded-full"
+          class="self-start sm:self-auto px-4 py-2 text-sm font-semibold rounded-full shrink-0"
           [class]="getStatusBadgeClass(ticket.status)"
         >
           {{ ticket.status }}
@@ -33,30 +34,37 @@
 
       @if (error) {
         <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          <div class="flex items-center">
-            <span>{{ error }}</span>
-          </div>
+          <span>{{ error }}</span>
         </div>
       }
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-2 space-y-6">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Description</h3>
             <p class="text-gray-700 whitespace-pre-wrap">{{ ticket.description }}</p>
           </div>
 
           @if (ticket.validationComment) {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
               <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 @if (ticket.status === TicketStatus.VALIDATED) {
-                  <lucide-angular name="circleCheck" class="text-green-500 mr-2"></lucide-angular>
+                  <lucide-angular
+                    name="circleCheck"
+                    class="text-green-500 mr-2 shrink-0"
+                  ></lucide-angular>
                   Approval Comment
                 } @else if (ticket.status === TicketStatus.REJECTED) {
-                  <lucide-angular name="CircleX" class="text-red-500 mr-2"></lucide-angular>
+                  <lucide-angular
+                    name="CircleX"
+                    class="text-red-500 mr-2 shrink-0"
+                  ></lucide-angular>
                   Rejection Reason
                 } @else {
-                  <lucide-angular name="messageSquare" class="text-blue-500 mr-2"></lucide-angular>
+                  <lucide-angular
+                    name="messageSquare"
+                    class="text-blue-500 mr-2 shrink-0"
+                  ></lucide-angular>
                   Validation Comment
                 }
               </h3>
@@ -73,75 +81,65 @@
           }
 
           @if (ticket.attachments && ticket.attachments.length > 0) {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
               <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                <lucide-angular name="paperclip" class="text-gray-400 mr-2"></lucide-angular>
+                <lucide-angular
+                  name="paperclip"
+                  class="text-gray-400 mr-2 inline-block"
+                ></lucide-angular>
                 Attachments ({{ ticket.attachments.length }})
               </h3>
               <div class="space-y-2">
                 @for (attachment of ticket.attachments; track attachment.attachmentId) {
                   <div
-                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3"
                   >
-                    <div class="flex items-center">
+                    <div class="flex items-center min-w-0">
                       <lucide-angular
                         name="file"
                         class="text-gray-400 mr-3 shrink-0"
                         size="20"
                       ></lucide-angular>
-                      <div>
-                        <p class="text-sm font-medium text-gray-900">{{ attachment.fileName }}</p>
+                      <div class="min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate">
+                          {{ attachment.fileName }}
+                        </p>
                         <p class="text-xs text-gray-500">
                           {{ (attachment.fileSize / 1024).toFixed(2) }} KB
                         </p>
                       </div>
                     </div>
-                    <div class="flex space-x-2">
-                      <button
-                        (click)="downloadAttachment(attachment)"
-                        class="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-                      >
-                        <lucide-angular name="download" class="inline-block mr-1"></lucide-angular>
-                        Download
-                      </button>
-                      <!-- to do after -->
-                      <!-- <button
-                        (click)="viewAttachment(attachment)"
-                        class="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700"
-                      >
-                        <lucide-angular name="eye" class="inline-block mr-1"></lucide-angular>
-                        View
-                      </button> -->
-                    </div>
+                    <button
+                      (click)="downloadAttachment(attachment)"
+                      class="shrink-0 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1"
+                    >
+                      <lucide-angular name="download" class="inline-block"></lucide-angular>
+                      <span class="hidden xs:inline">Download</span>
+                    </button>
                   </div>
                 }
               </div>
             </div>
           } @else {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                <i class="fas fa-paperclip text-gray-400 mr-2"></i>
-                Attachments
-              </h3>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
               <p class="text-gray-500 italic">No attachments for this ticket.</p>
             </div>
           }
         </div>
 
         <div class="space-y-6">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Details</h3>
-            <div class="space-y-4">
+            <div class="grid grid-cols-2 lg:grid-cols-1 gap-4">
               <div>
                 <p class="text-sm text-gray-600 mb-1">Created By</p>
                 <p class="font-medium text-gray-900">{{ ticket.createdByName }}</p>
               </div>
-
               <div>
                 <p class="text-sm text-gray-600 mb-1">Created At</p>
                 <p class="font-medium text-gray-900">{{ formatDate(ticket.createdAt) }}</p>
               </div>
-
               <div>
                 <p class="text-sm text-gray-600 mb-1">Assigned To</p>
                 @if (ticket.assignedToName) {
@@ -150,7 +148,6 @@
                   <p class="text-gray-500 italic">Not assigned</p>
                 }
               </div>
-
               <div>
                 <p class="text-sm text-gray-600 mb-1">Clients</p>
                 <div class="space-y-1">
@@ -159,7 +156,6 @@
                   }
                 </div>
               </div>
-
               @if (ticket.updatedAt) {
                 <div>
                   <p class="text-sm text-gray-600 mb-1">Last Updated</p>
@@ -169,7 +165,7 @@
             </div>
           </div>
 
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
             <div class="space-y-3">
               @if (canAssign() && ticket.status === TicketStatus.IN_PROGRESS) {
@@ -181,6 +177,9 @@
                   >
                     <option [value]="null">Select user...</option>
                     @for (user of availableUsers; track user.userId) {
+                      @if (availableUsers == null) {
+                        <option [value]="null">No available users</option>
+                      }
                       <option [value]="user.userId">
                         {{ user.name }} - {{ user.jobTitle }} - {{ user.clientName }}
                       </option>
@@ -246,8 +245,10 @@
     }
 
     @if (showValidationModal) {
-      <div class="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+      <div class="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+        <div
+          class="bg-white rounded-t-2xl sm:rounded-xl shadow-xl w-full sm:max-w-md sm:mx-4 p-5 sm:p-6"
+        >
           <h3 class="text-xl font-bold text-gray-900 mb-4">
             {{ validationAction === 'approve' ? 'Approve Ticket' : 'Reject Ticket' }}
           </h3>
@@ -258,17 +259,17 @@
             placeholder="Enter your comment..."
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-4"
           ></textarea>
-          <div class="flex space-x-3">
+          <div class="flex flex-col-reverse sm:flex-row gap-3">
             <button
               (click)="closeValidationModal()"
-              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-center"
             >
               Cancel
             </button>
             <button
               (click)="submitValidation()"
               [disabled]="!validationComment.trim() || loading"
-              class="flex-1 px-4 py-2 text-white rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
+              class="flex-1 px-4 py-2 text-white rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed text-center"
               [class.bg-green-600]="validationAction === 'approve'"
               [class.hover:bg-green-700]="validationAction === 'approve'"
               [class.bg-red-600]="validationAction === 'reject'"

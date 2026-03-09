@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../services/auth';
 import { switchMap } from 'rxjs';
 import { PageResponse } from '../models/pagedResponse.model';
-
+// ============================================================= FIX THE SEARCH by user/Client AND PAGINATION ============================================================= \\
 @Component({
   selector: 'app-users',
   imports: [CommonModule, FormsModule, LucideAngularModule],
@@ -51,6 +51,8 @@ export class Users implements OnInit {
     this.loadAllUsers();
   }
 
+
+
   loadClients(): void {
     this.loadingClients = true;
     this.clientsService.getClients().subscribe({
@@ -86,19 +88,15 @@ export class Users implements OnInit {
       })
     ).subscribe({
       next: (data) => {
-        // Check if it's paginated response or array
         if (this.isPageResponse(data)) {
           this.users = data.content;
           this.totalElements = data.totalElements;
           this.totalPages = data.totalPages;
           this.currentPage = data.pageNumber;
         } else {
-          // Non-paginated response (client-specific)
           this.users = data as User[];
-          // Manual pagination for client tickets
           this.totalElements = this.users.length;
           this.totalPages = Math.ceil(this.users.length / this.pageSize);
-          // Slice for current page
           const start = this.currentPage * this.pageSize;
           const end = start + this.pageSize;
           this.users = this.users.slice(start, end);
@@ -156,12 +154,9 @@ export class Users implements OnInit {
           this.totalPages = data.totalPages;
           this.currentPage = data.pageNumber;
         } else {
-          // Non-paginated response (client-specific)
           this.users = data as User[];
-          // Manual pagination for client tickets
           this.totalElements = this.users.length;
           this.totalPages = Math.ceil(this.users.length / this.pageSize);
-          // Slice for current page
           const start = this.currentPage * this.pageSize;
           const end = start + this.pageSize;
           this.users = this.users.slice(start, end);

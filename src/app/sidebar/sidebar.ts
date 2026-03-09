@@ -16,6 +16,7 @@ import { Subscription } from 'rxjs';
 export class Sidebar implements OnInit, OnDestroy {
   usersOpen = false;
   clientsOpen = false;
+  sidebarOpen = true;
   currentUser: User | null = null;
   private userSubscription?: Subscription;
 
@@ -33,9 +34,21 @@ export class Sidebar implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.userSubscription) {
-      this.userSubscription.unsubscribe();
+    this.userSubscription?.unsubscribe();
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen = !this.sidebarOpen;
+    if (!this.sidebarOpen) {
+      this.usersOpen = false;
+      this.clientsOpen = false;
     }
+  }
+
+  openSidebarAndExpand(menu: 'users' | 'clients'): void {
+    this.sidebarOpen = true;
+    if (menu === 'users') this.usersOpen = true;
+    if (menu === 'clients') this.clientsOpen = true;
   }
 
   toggleUsers(): void {

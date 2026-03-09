@@ -92,15 +92,9 @@ export class TicketDetails implements OnInit {
     console.log('Ticket data:', this.ticket);
     console.log('Ticket clientName:', this.ticket?.clientName);
 
-    this.usersService.getAllUsers().subscribe({
+    this.usersService.getUsersByClientId(this.ticket?.clientIds || 0).subscribe({
       next: (data: User[]) => {
-        this.availableUsers = data.filter(u => {
-          const isManager = u.roles.includes(Role.MANAGER);
-          const isSameCompany = Array.isArray(this.ticket?.clientName)
-            ? u.clientName && this.ticket.clientName.includes(u.clientName)
-            : u.clientName === this.ticket?.clientName;
-          return isManager && isSameCompany;
-        });
+        this.availableUsers = data.filter(user => user.roles.includes(Role.MANAGER));
 
         this.loadingUsers = false;
         console.log('Available users for assignment:', this.availableUsers);
