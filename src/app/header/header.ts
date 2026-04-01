@@ -166,7 +166,7 @@ export class Header implements OnInit {
 
   getNotificationIcon(type: string): string {
     switch (type) {
-      case 'approval': return 'checkCircle2';
+      case 'approval': return 'CircleCheck';
       case 'rejection': return 'xCircle';
       case 'assignment': return 'userCheck';
       default: return 'bell';

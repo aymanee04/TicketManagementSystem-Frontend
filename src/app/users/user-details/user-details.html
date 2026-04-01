@@ -213,7 +213,7 @@
                     <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
                       <span>Created: {{ formatDate(ticket.createdAt) }}</span>
                       @if (ticket.assignedToId) {
-                        <span>Assigned to User #{{ ticket.assignedToId }}</span>
+                        <span>Assigned to {{ ticket.assignedToName }}</span>
                       }
                     </div>
                   </div>

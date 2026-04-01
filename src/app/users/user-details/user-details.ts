@@ -54,7 +54,6 @@ export class UserDetails implements OnInit {
     this.userForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
-      cin: ['', [Validators.required]],
       jobTitle: ['', [Validators.required]]
     });
     this.userForm.disable();
@@ -143,7 +142,7 @@ export class UserDetails implements OnInit {
         this.userForm.disable();
         this.loading = false;
         this.cdr.detectChanges();
-        console.log('User updated successfully');
+        console.log('User updated successfully', data);
       },
       error: (err) => {
         console.error('Error updating user:', err);

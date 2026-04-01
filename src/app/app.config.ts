@@ -9,7 +9,10 @@ import {
   LayoutDashboard, Building2, Settings, TicketsIcon, Users, Eye, EyeClosed, ArrowDownUp, Search, Inbox, ArrowRight, ChevronRight,
   Clock, List, TrendingUp, Activity, ChartPie, ChartBar, CircleCheck, CircleX, MessageSquare, Paperclip, File, Download, Archive,
   Ban, X, ChevronLeft, CircleAlert, TriangleAlert, CircleQuestionMark, PenLine, Loader, Save, UserRoundPen, Menu, PanelLeftClose,
-  PanelLeftOpen, Mail, Calendar, TicketIcon, ChartColumn
+  PanelLeftOpen, Mail, Calendar, TicketIcon, ChartColumn,
+  TextAlignStart,
+  Key,
+  Info
 } from 'lucide-angular';
 import { authInterceptor } from './interceptors/auth-interceptor-interceptor';
 const appIcons = {
@@ -18,7 +21,7 @@ const appIcons = {
   Eye, EyeClosed, ArrowDownUp, Search, Inbox, ArrowRight, ChevronRight, Clock, List, TrendingUp,
   Activity, ChartPie, ChartBar, CircleCheck, CircleX, MessageSquare, Paperclip, File, Download,
   Archive, Ban, X, ChevronLeft, CircleAlert, TriangleAlert, CircleQuestionMark, UserRoundPen, Loader,
-  Save, Menu, PanelLeftClose, PanelLeftOpen, Mail, Calendar, TicketIcon, ChartColumn
+  Save, Menu, PanelLeftClose, PanelLeftOpen, Mail, Calendar, TicketIcon, ChartColumn, TextAlignStart, Key, Info
 };
 export const appConfig: ApplicationConfig = {
 
