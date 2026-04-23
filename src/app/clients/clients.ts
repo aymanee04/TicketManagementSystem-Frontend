@@ -1,11 +1,14 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { Client } from '../models/client.model';
 import { ClientStatus } from '../models/enums';
 import { ClientsService } from '../services/clients';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { ErrorResponse } from '../models/ErrorResponse';
 
 @Component({
   selector: 'app-clients',
@@ -14,12 +17,15 @@ import { LucideAngularModule } from 'lucide-angular';
   templateUrl: './clients.html',
   styleUrl: './clients.css',
 })
-export class Clients implements OnInit {
+export class Clients implements OnInit, OnDestroy {
+
   clients: Client[] = [];
-  loading: boolean = false;
+  loading = false;
   error: string | null = null;
+  errorType: string | null = null;
+
   selectedStatus: ClientStatus | 'ALL' = 'ALL';
-  searchTerm: string = '';
+  searchTerm = '';
 
   ClientStatus = ClientStatus;
 
@@ -29,6 +35,8 @@ export class Clients implements OnInit {
     { value: ClientStatus.INACTIVE, label: 'Inactive' },
     { value: ClientStatus.SUSPENDED, label: 'Suspended' }
   ];
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private clientsService: ClientsService,
@@ -40,83 +48,98 @@ export class Clients implements OnInit {
     this.loadClients();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  //  Loaders 
+
   loadClients(): void {
     this.loading = true;
-    this.error = null;
+    this.clearError();
 
-    this.clientsService.getClients().subscribe({
+    const request$ = this.selectedStatus === 'ALL'
+      ? this.clientsService.getClients()
+      : this.clientsService.getClientsByStatus(this.selectedStatus);
+
+    request$.pipe(takeUntil(this.destroy$)).subscribe({
       next: (data: Client[]) => {
         this.clients = data;
         this.loading = false;
         this.cdr.detectChanges();
-        console.log('Clients loaded');
       },
-      error: (err) => {
-        console.error('Error loading clients:', err);
-        this.error = 'Failed to load clients. Please try again.';
+      error: (err: ErrorResponse) => {
+        this.setError(err);
         this.loading = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  loadClientsByStatus(): void {
-    if (this.selectedStatus === 'ALL') {
-      this.loadClients();
-      return;
-    }
-
-    this.loading = true;
-    this.error = null;
-
-    this.clientsService.getClientsByStatus(this.selectedStatus).subscribe({
-      next: (data: Client[]) => {
-        this.clients = data;
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error loading clients by status:', err);
-        this.error = 'Failed to load clients. Please try again.';
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
+  //  Filters 
 
   onStatusChange(): void {
-    this.loadClientsByStatus();
+    this.searchTerm = '';
+    this.loadClients();
   }
 
   onSearch(): void {
-    // Filter clients locally by search term
-    if (this.searchTerm.trim()) {
-      this.clients = this.clients.filter(client =>
-        client.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        client.company.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        client.email.toLowerCase().includes(this.searchTerm.toLowerCase())
-      );
-    } else {
+    // Search is server-side: clear filter and reload, or implement a search endpoint
+    // For now we reload with the current status filter and let the results reset
+    if (!this.searchTerm.trim()) {
       this.loadClients();
     }
+    // If a backend search endpoint is added later, call it here
   }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.loadClients();
+  }
+
+  //  Navigation 
 
   viewClient(clientId: number): void {
     this.router.navigate(['/clients', clientId]);
   }
 
+  //  UI helpers 
+
+  get filteredClients(): Client[] {
+    if (!this.searchTerm.trim()) return this.clients;
+    const term = this.searchTerm.toLowerCase();
+    return this.clients.filter(c =>
+      c.name.toLowerCase().includes(term) ||
+      c.company?.toLowerCase().includes(term) ||
+      c.email?.toLowerCase().includes(term)
+    );
+  }
+
   getStatusBadgeClass(status: ClientStatus): string {
-    return status === ClientStatus.ACTIVE
-      ? 'bg-green-100 text-green-800'
-      : 'bg-gray-100 text-gray-800';
+    switch (status) {
+      case ClientStatus.ACTIVE: return 'bg-green-100 text-green-800';
+      case ClientStatus.INACTIVE: return 'bg-yellow-100 text-yellow-800';
+      case ClientStatus.SUSPENDED: return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   }
 
   formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric'
     });
+  }
+
+  //  Private helpers 
+
+  private setError(err: ErrorResponse): void {
+    this.error = err?.message ?? 'Failed to load clients. Please try again.';
+    this.errorType = err?.type ?? null;
+  }
+
+  private clearError(): void {
+    this.error = null;
+    this.errorType = null;
   }
 }

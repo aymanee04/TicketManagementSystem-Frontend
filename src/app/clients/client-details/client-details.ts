@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { ClientStatus } from '../../models/enums';
 import { LucideAngularModule } from "lucide-angular";
 import { AuthService } from '../../services/auth';
+import { ErrorResponse } from '../../models/ErrorResponse';
 
 @Component({
   selector: 'app-client-details',
@@ -32,12 +33,12 @@ export class ClientDetails implements OnInit {
   loadingEmployees: boolean = false;
   loadingTickets: boolean = false;
   error: string | null = null;
+  errorType: string | null = null;
   success: string | null = null;
 
   activeTab: 'info' | 'employees' | 'tickets' | 'suspension' = 'info';
   ClientStatus = ClientStatus;
 
-  // Popup properties
   popupConfig: {
     isOpen: boolean;
     title: string;
@@ -90,9 +91,11 @@ export class ClientDetails implements OnInit {
     });
   }
 
+  //  Loaders   
+
   loadClient(): void {
     this.loading = true;
-    this.error = null;
+    this.clearMessages();
 
     this.clientsService.getClientById(this.clientId).subscribe({
       next: (data: Client) => {
@@ -101,13 +104,11 @@ export class ClientDetails implements OnInit {
         this.populateSuspensionForm();
         this.loading = false;
         this.cdr.detectChanges();
-
         this.loadEmployees();
         this.loadTickets();
       },
-      error: (err) => {
-        console.error('Error loading client:', err);
-        this.error = 'Failed to load client details';
+      error: (err: ErrorResponse) => {
+        this.setError(err);
         this.loading = false;
         this.cdr.detectChanges();
       }
@@ -122,7 +123,7 @@ export class ClientDetails implements OnInit {
         this.loadingEmployees = false;
         this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: (err: ErrorResponse) => {
         console.error('Error loading employees:', err);
         this.loadingEmployees = false;
         this.cdr.detectChanges();
@@ -138,13 +139,15 @@ export class ClientDetails implements OnInit {
         this.loadingTickets = false;
         this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: (err: ErrorResponse) => {
         console.error('Error loading tickets:', err);
         this.loadingTickets = false;
         this.cdr.detectChanges();
       }
     });
   }
+
+  //  Form helpers 
 
   populateForm(): void {
     if (this.client) {
@@ -159,7 +162,7 @@ export class ClientDetails implements OnInit {
   }
 
   populateSuspensionForm(): void {
-    if (this.client && this.client.suspensionReason) {
+    if (this.client?.suspensionReason) {
       this.suspensionForm.patchValue({
         suspensionReason: this.client.suspensionReason
       });
@@ -175,6 +178,7 @@ export class ClientDetails implements OnInit {
     this.isEditing = false;
     this.clientForm.disable();
     this.populateForm();
+    this.clearMessages();
   }
 
   saveChanges(): void {
@@ -184,7 +188,7 @@ export class ClientDetails implements OnInit {
     }
 
     this.loading = true;
-    this.error = null;
+    this.clearMessages();
 
     const updatedClient = {
       name: this.clientForm.value.name,
@@ -202,21 +206,111 @@ export class ClientDetails implements OnInit {
         this.loading = false;
         this.success = 'Client updated successfully';
         this.cdr.detectChanges();
-
-        // Clear success message after 3 seconds
-        setTimeout(() => {
-          this.success = null;
-          this.cdr.detectChanges();
-        }, 3000);
+        this.autoHideSuccess();
       },
-      error: (err) => {
-        console.error('Error updating client:', err);
-        this.error = 'Failed to update client';
+      error: (err: ErrorResponse) => {
+        this.setError(err);
         this.loading = false;
         this.cdr.detectChanges();
       }
     });
   }
+
+  //  Suspend / reactivate 
+
+  suspendClient(): void {
+    if (this.suspensionForm.invalid) {
+      this.suspensionForm.markAllAsTouched();
+      return;
+    }
+
+    this.showPopup({
+      title: 'Suspend Client',
+      message: 'Are you sure you want to SUSPEND this client? All users will be unable to login.',
+      confirmText: 'Suspend',
+      cancelText: 'Cancel',
+      isDanger: true,
+      onConfirm: () => {
+        this.closePopup();
+        this.confirmSuspend();
+      }
+    });
+  }
+
+  private confirmSuspend(): void {
+    this.loading = true;
+    this.clearMessages();
+
+    const request: SuspendClientRequest = {
+      suspensionReason: this.suspensionForm.value.suspensionReason
+    };
+
+    this.clientsService.suspendClient(this.clientId, request).subscribe({
+      next: (data: Client) => {
+        this.client = data;
+        this.loading = false;
+        this.success = 'Client suspended successfully';
+        this.populateForm();
+        this.cdr.detectChanges();
+        this.autoHideSuccess();
+      },
+      error: (err: ErrorResponse) => {
+        this.setError(err);
+        // If backend rejected the reason text, highlight the field
+        if (err?.type === 'VALIDATION_ERROR') {
+          this.suspensionForm.get('suspensionReason')?.markAsTouched();
+        }
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  reactivateClient(): void {
+    this.showPopup({
+      title: 'Reactivate Client',
+      message: 'Are you sure you want to REACTIVATE this client? All users will be able to login again.',
+      confirmText: 'Reactivate',
+      cancelText: 'Cancel',
+      isDanger: false,
+      onConfirm: () => {
+        this.closePopup();
+        this.confirmReactivate();
+      }
+    });
+  }
+
+  private confirmReactivate(): void {
+    this.loading = true;
+    this.clearMessages();
+
+    this.clientsService.reactivateClient(this.clientId).subscribe({
+      next: (data: Client) => {
+        this.client = data;
+        this.loading = false;
+        this.success = 'Client reactivated successfully';
+        this.populateForm();
+        this.suspensionForm.reset();
+        this.cdr.detectChanges();
+        this.autoHideSuccess();
+      },
+      error: (err: ErrorResponse) => {
+        // RESOURCE_NOT_FOUND: client was deleted — redirect after showing message
+        if (err?.type === 'RESOURCE_NOT_FOUND') {
+          this.setError(err);
+          this.loading = false;
+          this.cdr.detectChanges();
+          setTimeout(() => this.router.navigate(['/clients']), 3000);
+          return;
+        }
+        this.setError(err);
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  //  Popup 
 
   showPopup(config: {
     title: string;
@@ -245,100 +339,11 @@ export class ClientDetails implements OnInit {
     this.cdr.detectChanges();
   }
 
-  suspendClient(): void {
-    if (this.suspensionForm.invalid) {
-      this.suspensionForm.markAllAsTouched();
-      return;
-    }
-
-    this.showPopup({
-      title: 'Suspend Client',
-      message: 'Are you sure you want to SUSPEND this client? All users will be unable to login.',
-      confirmText: 'Suspend',
-      cancelText: 'Cancel',
-      isDanger: true,
-      onConfirm: () => {
-        this.closePopup();
-        this.confirmSuspend();
-      }
-    });
-  }
-
-  private confirmSuspend(): void {
-    this.loading = true;
-    this.error = null;
-
-    const request: SuspendClientRequest = {
-      suspensionReason: this.suspensionForm.value.suspensionReason
-    };
-
-    this.clientsService.suspendClient(this.clientId, request).subscribe({
-      next: (data: Client) => {
-        this.client = data;
-        this.loading = false;
-        this.success = 'Client suspended successfully';
-        this.populateForm();
-        this.cdr.detectChanges();
-
-        setTimeout(() => {
-          this.success = null;
-          this.cdr.detectChanges();
-        }, 3000);
-      },
-      error: (err) => {
-        console.error('Error suspending client:', err);
-        this.error = 'Failed to suspend client';
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  reactivateClient(): void {
-    this.showPopup({
-      title: 'Reactivate Client',
-      message: 'Are you sure you want to REACTIVATE this client? All users will be able to login again.',
-      confirmText: 'Reactivate',
-      cancelText: 'Cancel',
-      isDanger: false,
-      onConfirm: () => {
-        this.closePopup();
-        this.confirmReactivate();
-      }
-    });
-  }
-
-  private confirmReactivate(): void {
-    this.loading = true;
-    this.error = null;
-
-    this.clientsService.reactivateClient(this.clientId).subscribe({
-      next: (data: Client) => {
-        this.client = data;
-        this.loading = false;
-        this.success = 'Client reactivated successfully';
-        this.populateForm();
-        this.suspensionForm.reset();
-        this.cdr.detectChanges();
-
-        setTimeout(() => {
-          this.success = null;
-          this.cdr.detectChanges();
-        }, 3000);
-      },
-      error: (err) => {
-        console.error('Error reactivating client:', err);
-        this.error = 'Failed to reactivate client';
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
+  //  Navigation / misc 
 
   setTab(tab: 'info' | 'employees' | 'tickets' | 'suspension'): void {
     this.activeTab = tab;
-    this.error = null;
-    this.success = null;
+    this.clearMessages();
   }
 
   goBack(): void {
@@ -347,44 +352,50 @@ export class ClientDetails implements OnInit {
 
   getStatusBadgeClass(status: ClientStatus): string {
     switch (status) {
-      case ClientStatus.ACTIVE:
-        return 'bg-green-100 text-green-800';
-      case ClientStatus.INACTIVE:
-        return 'bg-yellow-100 text-yellow-800';
-      case ClientStatus.SUSPENDED:
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case ClientStatus.ACTIVE: return 'bg-green-100 text-green-800';
+      case ClientStatus.INACTIVE: return 'bg-yellow-100 text-yellow-800';
+      case ClientStatus.SUSPENDED: return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   }
 
   formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
     });
   }
 
-  viewTicket(ticketId: number): void {
-    this.router.navigate(['/tickets', ticketId]);
-  }
-
-  viewUser(userId: number): void {
-    this.router.navigate(['/users', userId]);
-  }
-
-  hasRole(role: string): boolean {
-    return this.authService.hasRole(role);
-  }
+  viewTicket(ticketId: number): void { this.router.navigate(['/tickets', ticketId]); }
+  viewUser(userId: number): void { this.router.navigate(['/users', userId]); }
+  hasRole(role: string): boolean { return this.authService.hasRole(role); }
 
   getCurrentUserId(): number | null {
     const currentUser = this.authService.currentUserValue;
     return currentUser ? currentUser.userId : null;
   }
+
+  //  Private helpers 
+
+  private setError(err: ErrorResponse): void {
+    this.error = err?.message ?? 'An unexpected error occurred';
+    this.errorType = err?.type ?? null;
+  }
+
+  private clearMessages(): void {
+    this.error = null;
+    this.errorType = null;
+    this.success = null;
+  }
+
+  private autoHideSuccess(): void {
+    setTimeout(() => {
+      this.success = null;
+      this.cdr.detectChanges();
+    }, 3000);
+  }
+
+  //  Form accessors 
 
   get name() { return this.clientForm.get('name'); }
   get company() { return this.clientForm.get('company'); }

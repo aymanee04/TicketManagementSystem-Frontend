@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { User } from '../models/user.model';
 import { UsersService } from '../services/users';
 import { ClientsService } from '../services/clients';
@@ -9,9 +9,11 @@ import { LucideAngularModule } from 'lucide-angular';
 import { Role } from '../models/enums';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth';
-import { switchMap } from 'rxjs';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { PageResponse } from '../models/pagedResponse.model';
-// ============================================================= FIX THE SEARCH by user/Client AND PAGINATION ============================================================= \\
+import { ErrorResponse } from '../models/ErrorResponse';
+
 @Component({
   selector: 'app-users',
   imports: [CommonModule, FormsModule, LucideAngularModule],
@@ -19,24 +21,28 @@ import { PageResponse } from '../models/pagedResponse.model';
   templateUrl: './users.html',
   styleUrl: './users.css',
 })
-export class Users implements OnInit {
-  loading: boolean = false;
-  loadingClients: boolean = false;
+export class Users implements OnInit, OnDestroy {
+
+  loading = false;
+  loadingClients = false;
   error: string | null = null;
+  errorType: string | null = null;
+
   users: User[] = [];
-  Role = Role;
   clients: Client[] = [];
+  Role = Role;
+
   selectedClientId: number | 'ALL' = 'ALL';
-  searchTerm: string = '';
-  currentUser: User | null = null;
+  searchTerm = '';
 
   // Pagination
-  currentPage: number = 0;
-  pageSize: number = 10;
-  totalElements: number = 0;
-  totalPages: number = 0;
-  pageSizeOptions: number[] = [5, 10, 20, 50];
+  currentPage = 0;
+  pageSize = 10;
+  totalElements = 0;
+  totalPages = 0;
+  pageSizeOptions = [5, 10, 20, 50];
 
+  private destroy$ = new Subject<void>();
 
   constructor(
     private usersService: UsersService,
@@ -48,149 +54,126 @@ export class Users implements OnInit {
 
   ngOnInit(): void {
     this.loadClients();
-    this.loadAllUsers();
+    this.loadUsers();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
+  //  Loaders 
 
   loadClients(): void {
     this.loadingClients = true;
-    this.clientsService.getClients().subscribe({
+    this.clientsService.getClients().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
       next: (data: Client[]) => {
         this.clients = data;
         this.loadingClients = false;
         this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('Error loading clients', err);
+      error: () => {
         this.loadingClients = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  loadAllUsers(): void {
+  loadUsers(): void {
     this.loading = true;
-    this.error = null;
-    this.authService.currentUser$.pipe(
-      switchMap(user => {
-        this.currentUser = user;
-        if (this.searchTerm.trim()) {
-          return this.usersService.searchUsersWithPagination(this.searchTerm, this.currentPage, this.pageSize);
-        }
-        if (this.selectedClientId !== 'ALL') {
-          return this.usersService.getUsersByClientIdWithPagination(this.selectedClientId, this.currentPage, this.pageSize);
-        }
-        if (user?.clientId) {
-          return this.usersService.getUsersByClientId(user.clientId)
-        }
-        return this.usersService.getUsersWithPagination(this.currentPage, this.pageSize)
-      })
-    ).subscribe({
-      next: (data) => {
-        if (this.isPageResponse(data)) {
-          this.users = data.content;
-          this.totalElements = data.totalElements;
-          this.totalPages = data.totalPages;
-          this.currentPage = data.pageNumber;
-        } else {
-          this.users = data as User[];
-          this.totalElements = this.users.length;
-          this.totalPages = Math.ceil(this.users.length / this.pageSize);
-          const start = this.currentPage * this.pageSize;
-          const end = start + this.pageSize;
-          this.users = this.users.slice(start, end);
-        }
+    this.clearError();
 
+    // Pick the right endpoint based on current filter state
+    const request$ = this.buildRequest();
+
+    request$.pipe(takeUntil(this.destroy$)).subscribe({
+      next: (data: PageResponse<User>) => {
+        this.users = data.content;
+        this.totalElements = data.totalElements;
+        this.totalPages = data.totalPages;
+        this.currentPage = data.pageNumber;
         this.loading = false;
         this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('Error loading users', err);
-        this.error = 'Failed to load users. Please try again.';
+      error: (err: ErrorResponse) => {
+        this.setError(err);
         this.loading = false;
         this.cdr.detectChanges();
       }
     });
   }
 
+  //  Filters / search 
+
   onSearch(): void {
     this.currentPage = 0;
-    if (this.searchTerm.trim()) {
-      this.loadAllUsers();
-    } else {
-      this.loadAllUsers();
-    }
+    this.loadUsers();
   }
 
-
-  isPageResponse(data: any): data is PageResponse<User> {
-    return data && typeof data === 'object' && 'content' in data && 'totalElements' in data;
+  onClientChange(): void {
+    this.currentPage = 0;
+    this.searchTerm = '';
+    this.loadUsers();
   }
 
+  clearFilter(): void {
+    this.selectedClientId = 'ALL';
+    this.searchTerm = '';
+    this.currentPage = 0;
+    this.loadUsers();
+  }
+
+  //  Pagination 
 
   nextPage(): void {
     if (this.currentPage < this.totalPages - 1) {
       this.currentPage++;
-      this.loadAllUsers();
+      this.loadUsers();
     }
   }
 
   previousPage(): void {
     if (this.currentPage > 0) {
       this.currentPage--;
-      this.loadAllUsers();
+      this.loadUsers();
     }
   }
 
-  loadUsersByClient(clientId: number): void {
-    this.loading = true;
-    this.error = null;
-    this.usersService.getUsersByClientIdWithPagination(clientId).subscribe({
-      next: (data) => {
-        if (this.isPageResponse(data)) {
-          this.users = data.content;
-          this.totalElements = data.totalElements;
-          this.totalPages = data.totalPages;
-          this.currentPage = data.pageNumber;
-        } else {
-          this.users = data as User[];
-          this.totalElements = this.users.length;
-          this.totalPages = Math.ceil(this.users.length / this.pageSize);
-          const start = this.currentPage * this.pageSize;
-          const end = start + this.pageSize;
-          this.users = this.users.slice(start, end);
-        }
-
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error loading users by client', err);
-        this.error = 'Failed to load users. Please try again.';
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  onClientChange(): void {
-    if (this.selectedClientId === 'ALL') {
-      this.loadAllUsers();
-    } else {
-      this.loadUsersByClient(this.selectedClientId as number);
-    }
-  }
-
-  clearFilter(): void {
-    this.selectedClientId = 'ALL';
-    this.loadAllUsers();
-  }
+  //  Navigation 
 
   viewUser(userId: number): void {
     this.router.navigate(['/users', userId]);
   }
+
   hasRole(role: string): boolean {
     return this.authService.hasRole(role);
+  }
+
+  //  Private helpers 
+
+  private buildRequest() {
+    if (this.searchTerm.trim()) {
+      return this.usersService.searchUsersWithPagination(
+        this.searchTerm, this.currentPage, this.pageSize
+      );
+    }
+    if (this.selectedClientId !== 'ALL') {
+      return this.usersService.getUsersByClientIdWithPagination(
+        this.selectedClientId as number, this.currentPage, this.pageSize
+      );
+    }
+    return this.usersService.getUsersWithPagination(this.currentPage, this.pageSize);
+  }
+
+  private setError(err: ErrorResponse): void {
+    this.error = err?.message ?? 'Failed to load users. Please try again.';
+    this.errorType = err?.type ?? null;
+  }
+
+  private clearError(): void {
+    this.error = null;
+    this.errorType = null;
   }
 }

@@ -9,6 +9,7 @@
         ></lucide-angular>
       </div>
     } @else if (ticket) {
+      <!-- Header -->
       <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div class="flex items-center">
           <button
@@ -32,44 +33,89 @@
         </span>
       </div>
 
+      <!-- Error banner -->
       @if (error) {
-        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          <span>{{ error }}</span>
+        <div
+          class="mb-6 px-4 py-3 rounded-lg border flex items-start gap-3 text-sm"
+          [ngClass]="{
+            'bg-red-50 border-red-200 text-red-800':
+              errorType === 'RESOURCE_NOT_FOUND' || errorType === 'INTERNAL_ERROR' || !errorType,
+            'bg-yellow-50 border-yellow-200 text-yellow-800':
+              errorType === 'BUSINESS_RULE_VIOLATION' || errorType === 'VALIDATION_ERROR',
+          }"
+        >
+          <lucide-icon
+            [name]="
+              errorType === 'BUSINESS_RULE_VIOLATION'
+                ? 'shieldAlert'
+                : errorType === 'RESOURCE_NOT_FOUND'
+                  ? 'searchX'
+                  : 'triangleAlert'
+            "
+            [size]="16"
+            class="shrink-0 mt-0.5"
+          >
+          </lucide-icon>
+          <div class="flex-1">
+            <p class="font-semibold">
+              {{
+                errorType === 'BUSINESS_RULE_VIOLATION'
+                  ? 'Action Not Allowed'
+                  : errorType === 'RESOURCE_NOT_FOUND'
+                    ? 'Not Found'
+                    : 'Error'
+              }}
+            </p>
+            <p class="mt-0.5">{{ error }}</p>
+          </div>
+          <button (click)="error = null; errorType = null" class="opacity-60 hover:opacity-100">
+            <lucide-icon name="x" [size]="14"></lucide-icon>
+          </button>
+        </div>
+      }
+
+      <!-- Success banner -->
+      @if (success) {
+        <div
+          class="mb-6 px-4 py-3 rounded-lg border flex items-center gap-3 text-sm bg-green-50 border-green-200 text-green-800"
+        >
+          <lucide-icon name="circleCheck" [size]="16" class="shrink-0"></lucide-icon>
+          <span class="flex-1">{{ success }}</span>
+          <button (click)="success = null" class="opacity-60 hover:opacity-100">
+            <lucide-icon name="x" [size]="14"></lucide-icon>
+          </button>
         </div>
       }
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left column -->
         <div class="lg:col-span-2 space-y-6">
+          <!-- Description -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <lucide-angular
-                name="textAlignStart"
-                class="text-gray-400 mr-2 shrink-0"
-              ></lucide-angular>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <lucide-angular name="textAlignStart" class="text-gray-400 shrink-0"></lucide-angular>
               Description
             </h3>
             <p class="text-gray-700 whitespace-pre-wrap">{{ ticket.description }}</p>
           </div>
 
+          <!-- Validation comment -->
           @if (ticket.validationComment) {
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 @if (ticket.status === TicketStatus.VALIDATED) {
                   <lucide-angular
                     name="circleCheck"
-                    class="text-green-500 mr-2 shrink-0"
+                    class="text-green-500 shrink-0"
                   ></lucide-angular>
                   Approval Comment
                 } @else if (ticket.status === TicketStatus.REJECTED) {
-                  <lucide-angular
-                    name="CircleX"
-                    class="text-red-500 mr-2 shrink-0"
-                  ></lucide-angular>
+                  <lucide-angular name="circleX" class="text-red-500 shrink-0"></lucide-angular>
                   Rejection Reason
                 } @else {
                   <lucide-angular
                     name="messageSquare"
-                    class="text-blue-500 mr-2 shrink-0"
+                    class="text-blue-500 shrink-0"
                   ></lucide-angular>
                   Validation Comment
                 }
@@ -77,8 +123,8 @@
               <div class="bg-gray-50 rounded-lg p-4">
                 <p class="text-gray-700">{{ ticket.validationComment }}</p>
                 @if (ticket.validatedAt) {
-                  <p class="text-sm text-gray-500 mt-2">
-                    <lucide-angular name="clock" class="inline-block mr-1"></lucide-angular>
+                  <p class="text-sm text-gray-500 mt-2 flex items-center gap-1">
+                    <lucide-angular name="clock" [size]="14" class="inline-block"></lucide-angular>
                     {{ formatDate(ticket.validatedAt) }}
                   </p>
                 }
@@ -86,15 +132,14 @@
             </div>
           }
 
-          @if (ticket.attachments && ticket.attachments.length > 0) {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">
-                <lucide-angular
-                  name="paperclip"
-                  class="text-gray-400 mr-2 inline-block"
-                ></lucide-angular>
-                Attachments ({{ ticket.attachments.length }})
-              </h3>
+          <!-- Attachments -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <lucide-angular name="paperclip" class="text-gray-400 shrink-0"></lucide-angular>
+              Attachments
+              {{ ticket.attachments.length ? '(' + ticket.attachments.length + ')' : '' }}
+            </h3>
+            @if (ticket.attachments && ticket.attachments.length > 0) {
               <div class="space-y-2">
                 @for (attachment of ticket.attachments; track attachment.attachmentId) {
                   <div
@@ -115,26 +160,34 @@
                         </p>
                       </div>
                     </div>
-                    <button
-                      (click)="downloadAttachment(attachment)"
-                      class="shrink-0 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1"
-                    >
-                      <lucide-angular name="download" class="inline-block"></lucide-angular>
-                      <span class="hidden xs:inline">Download</span>
-                    </button>
+                    <div class="flex gap-2 shrink-0">
+                      <button
+                        (click)="viewAttachment(attachment)"
+                        class="px-3 py-1 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-100 flex items-center gap-1"
+                      >
+                        <lucide-angular name="eye" [size]="14"></lucide-angular>
+                        <span class="hidden xs:inline">View</span>
+                      </button>
+                      <button
+                        (click)="downloadAttachment(attachment)"
+                        class="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 flex items-center gap-1"
+                      >
+                        <lucide-angular name="download" [size]="14"></lucide-angular>
+                        <span class="hidden xs:inline">Download</span>
+                      </button>
+                    </div>
                   </div>
                 }
               </div>
-            </div>
-          } @else {
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
+            } @else {
               <p class="text-gray-500 italic">No attachments for this ticket.</p>
-            </div>
-          }
+            }
+          </div>
         </div>
 
+        <!-- Right column -->
         <div class="space-y-6">
+          <!-- Details -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Details</h3>
             <div class="grid grid-cols-2 lg:grid-cols-1 gap-4">
@@ -168,57 +221,82 @@
                   <p class="font-medium text-gray-900">{{ formatDate(ticket.updatedAt) }}</p>
                 </div>
               }
+              <!-- @if (ticket.scheduledDeleteAt) {
+                <div>
+                  <p class="text-sm text-gray-600 mb-1">Scheduled Deletion</p>
+                  <p class="font-medium text-red-600 flex items-center gap-1">
+                    <lucide-icon name="clock" [size]="13"></lucide-icon>
+                    {{ formatDate(ticket.scheduledDeleteAt) }}
+                  </p>
+                </div>
+              } -->
             </div>
           </div>
 
+          <!-- Actions -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
             <div class="space-y-3">
+              <!-- Assign -->
               @if (canAssign() && ticket.status === TicketStatus.IN_PROGRESS) {
                 <div>
                   <label class="block text-sm text-gray-600 mb-2">Assign To</label>
-                  <select
-                    [(ngModel)]="selectedUserId"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-2"
-                  >
-                    <option [value]="null">Select user...</option>
-                    @for (user of availableUsers; track user.userId) {
-                      @if (availableUsers == null) {
-                        <option [value]="null">No available users</option>
+                  @if (loadingUsers) {
+                    <div class="flex items-center gap-2 text-sm text-gray-500 py-2">
+                      <lucide-angular
+                        name="loaderCircleIcon"
+                        [size]="14"
+                        class="animate-spin"
+                      ></lucide-angular>
+                      Loading users...
+                    </div>
+                  } @else {
+                    <select
+                      [(ngModel)]="selectedUserId"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-2"
+                    >
+                      <option [value]="null">Select user...</option>
+                      @for (user of availableUsers; track user.userId) {
+                        <option [value]="user.userId">{{ user.name }} — {{ user.jobTitle }}</option>
                       }
-                      <option [value]="user.userId">
-                        {{ user.name }} - {{ user.jobTitle }} - {{ user.clientName }}
-                      </option>
-                    }
-                  </select>
-                  <button
-                    (click)="assignTicket()"
-                    [disabled]="!selectedUserId || loading"
-                    class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
-                  >
-                    <lucide-angular name="userCheck" class="inline-block mr-2"></lucide-angular>
-                    Assign Ticket
-                  </button>
+                    </select>
+                    <button
+                      (click)="assignTicket()"
+                      [disabled]="!selectedUserId || loading"
+                      class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+                    >
+                      <lucide-angular name="userCheck" [size]="16"></lucide-angular>
+                      Assign Ticket
+                    </button>
+                  }
                 </div>
               }
 
-              @if (canValidate() && ticket.status === TicketStatus.IN_PROGRESS) {
+              <!-- Approve / Reject -->
+              @if (
+                canValidate() &&
+                (ticket.status === TicketStatus.IN_PROGRESS ||
+                  ticket.status === TicketStatus.PENDING_VALIDATION)
+              ) {
                 <div class="border-t border-gray-200 pt-3 space-y-2">
                   <button
                     (click)="openValidationModal('approve')"
-                    class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                    class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm flex items-center justify-center gap-2"
                   >
+                    <lucide-icon name="circleCheck" [size]="16"></lucide-icon>
                     Approve Ticket
                   </button>
                   <button
                     (click)="openValidationModal('reject')"
-                    class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                    class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm flex items-center justify-center gap-2"
                   >
+                    <lucide-icon name="circleX" [size]="16"></lucide-icon>
                     Reject Ticket
                   </button>
                 </div>
               }
 
+              <!-- Archive / Cancel -->
               @if (canArchive()) {
                 <div class="border-t border-gray-200 pt-3 space-y-2">
                   @if (
@@ -227,21 +305,42 @@
                   ) {
                     <button
                       (click)="archiveTicket()"
-                      class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+                      class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm flex items-center justify-center gap-2"
                     >
-                      <lucide-angular name="archive" class="inline-block mr-2"></lucide-angular>
+                      <lucide-angular name="archive" [size]="16"></lucide-angular>
                       Archive Ticket
                     </button>
                   }
-                  @if (ticket.status === TicketStatus.IN_PROGRESS) {
+                  @if (
+                    ticket.status === TicketStatus.IN_PROGRESS ||
+                    ticket.status === TicketStatus.PENDING_VALIDATION
+                  ) {
                     <button
                       (click)="cancelTicket()"
-                      class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm"
+                      class="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm flex items-center justify-center gap-2"
                     >
-                      <lucide-angular name="x" class="inline-block mr-2"></lucide-angular>
+                      <lucide-icon name="ban" [size]="16"></lucide-icon>
                       Cancel Ticket
                     </button>
                   }
+                </div>
+              }
+
+              <!-- Hard delete (ADMIN only, ARCHIVED or CANCELLED) -->
+              @if (
+                canDelete() &&
+                (ticket.status === TicketStatus.ARCHIVED ||
+                  ticket.status === TicketStatus.CANCELLED)
+              ) {
+                <div class="border-t border-gray-200 pt-3">
+                  <button
+                    (click)="hardDeleteTicket()"
+                    class="w-full px-4 py-2 bg-red-700 text-white rounded-lg hover:bg-red-800 text-sm flex items-center justify-center gap-2"
+                  >
+                    <lucide-icon name="trash2" [size]="16"></lucide-icon>
+                    Delete Permanently
+                  </button>
+                  <p class="text-xs text-gray-400 mt-1 text-center">This action cannot be undone</p>
                 </div>
               }
             </div>
@@ -250,6 +349,7 @@
       </div>
     }
 
+    <!-- Validation modal -->
     @if (showValidationModal) {
       <div class="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
         <div
@@ -264,7 +364,8 @@
             rows="4"
             placeholder="Enter your comment..."
             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-4"
-          ></textarea>
+          >
+          </textarea>
           <div class="flex flex-col-reverse sm:flex-row gap-3">
             <button
               (click)="closeValidationModal()"
@@ -281,8 +382,60 @@
               [class.bg-red-600]="validationAction === 'reject'"
               [class.hover:bg-red-700]="validationAction === 'reject'"
             >
+              @if (loading) {
+                <lucide-icon
+                  name="loaderCircleIcon"
+                  [size]="16"
+                  class="inline animate-spin mr-1"
+                ></lucide-icon>
+              }
               {{ validationAction === 'approve' ? 'Approve' : 'Reject' }}
             </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Confirm popup (archive / cancel / delete) -->
+    @if (popupConfig.isOpen) {
+      <div
+        class="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+      >
+        <div class="bg-white rounded-t-2xl sm:rounded-lg shadow-lg w-full sm:max-w-md">
+          <div class="p-5 sm:p-6">
+            <div class="flex items-center mb-4">
+              <lucide-icon
+                [name]="popupConfig.isDanger ? 'triangleAlert' : 'archive'"
+                [size]="24"
+                [class]="
+                  popupConfig.isDanger
+                    ? 'text-red-500 mr-3 shrink-0'
+                    : 'text-gray-500 mr-3 shrink-0'
+                "
+              >
+              </lucide-icon>
+              <h2 class="text-xl font-bold text-gray-900">{{ popupConfig.title }}</h2>
+            </div>
+            <p class="text-gray-600 mb-6">{{ popupConfig.message }}</p>
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+              <button
+                (click)="popupConfig.onCancel()"
+                class="w-full sm:w-auto px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-center"
+              >
+                {{ popupConfig.cancelText }}
+              </button>
+              <button
+                (click)="popupConfig.onConfirm()"
+                [class]="
+                  'w-full sm:w-auto px-4 py-2.5 text-white rounded-lg transition-colors font-medium text-center ' +
+                  (popupConfig.isDanger
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-gray-600 hover:bg-gray-700')
+                "
+              >
+                {{ popupConfig.confirmText }}
+              </button>
+            </div>
           </div>
         </div>
       </div>

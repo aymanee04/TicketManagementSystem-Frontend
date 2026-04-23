@@ -65,7 +65,7 @@
               <span class="font-semibold text-gray-900">{{ stats.totalCreated }}</span>
             </div>
 
-            @if (hasRole('MANAGER') || hasRole('ADMIN')) {
+            @if (hasRole('MANAGER')) {
               <div class="flex items-center justify-between">
                 <span class="text-sm text-gray-600 flex items-center gap-2">
                   <lucide-icon name="userCheck" [size]="16"></lucide-icon>
@@ -128,7 +128,7 @@
               >
                 My Tickets ({{ myTickets.length }})
               </button>
-              @if (hasRole('MANAGER') || hasRole('ADMIN')) {
+              @if (hasRole('MANAGER')) {
                 <button
                   (click)="setTab('assigned')"
                   class="py-4 px-1 border-b-2 font-medium text-sm transition-colors"

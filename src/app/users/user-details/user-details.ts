@@ -8,7 +8,7 @@ import { TicketsService } from '../../services/tickets';
 import { User } from '../../models/user.model';
 import { Ticket } from '../../models/ticket.model';
 import { LucideAngularModule } from 'lucide-angular';
-
+import { ErrorResponse } from '../../models/ErrorResponse';
 
 @Component({
   selector: 'app-user-detail',
@@ -25,14 +25,14 @@ export class UserDetails implements OnInit {
   assignedTickets: Ticket[] = [];
 
   userForm!: FormGroup;
-  isEditing: boolean = false;
-  loading: boolean = false;
-  loadingTickets: boolean = false;
+  isEditing = false;
+  loading = false;
+  loadingTickets = false;
   error: string | null = null;
+  errorType: string | null = null;
+  success: string | null = null;
 
   activeTab: 'info' | 'created' | 'assigned' = 'info';
-
-  // Expose enum
   Role = Role;
 
   constructor(
@@ -50,6 +50,8 @@ export class UserDetails implements OnInit {
     this.loadUser();
   }
 
+  //  Form 
+
   initForm(): void {
     this.userForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
@@ -57,47 +59,6 @@ export class UserDetails implements OnInit {
       jobTitle: ['', [Validators.required]]
     });
     this.userForm.disable();
-  }
-
-  loadUser(): void {
-    this.loading = true;
-    this.error = null;
-
-    this.usersService.getUserById(this.userId).subscribe({
-      next: (data: User) => {
-        this.user = data;
-        this.populateForm();
-        this.loading = false;
-        this.cdr.detectChanges();
-
-        // Load tickets
-        this.loadTickets();
-      },
-      error: (err) => {
-        console.error('Error loading user:', err);
-        this.error = 'Failed to load user details';
-        this.loading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  loadTickets(): void {
-    this.loadingTickets = true;
-
-    this.ticketsService.getTickets().subscribe({
-      next: (data: Ticket[]) => {
-        this.createdTickets = data.filter(t => t.createdById === this.userId);
-        this.assignedTickets = data.filter(t => t.assignedToId === this.userId);
-        this.loadingTickets = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        console.error('Error loading tickets:', err);
-        this.loadingTickets = false;
-        this.cdr.detectChanges();
-      }
-    });
   }
 
   populateForm(): void {
@@ -119,6 +80,7 @@ export class UserDetails implements OnInit {
     this.isEditing = false;
     this.userForm.disable();
     this.populateForm();
+    this.clearMessages();
   }
 
   saveChanges(): void {
@@ -128,33 +90,87 @@ export class UserDetails implements OnInit {
     }
 
     this.loading = true;
-    this.error = null;
+    this.clearMessages();
 
-    const updatedUser = {
-      ...this.user,
-      ...this.userForm.value
+    // Send only the 3 fields UpdateUserRequest expects — never spread the whole entity
+    const request = {
+      name: this.userForm.value.name,
+      email: this.userForm.value.email,
+      jobTitle: this.userForm.value.jobTitle
     };
 
-    this.usersService.updateUser(this.userId, updatedUser).subscribe({
+    this.usersService.updateUser(this.userId, request).subscribe({
       next: (data: User) => {
         this.user = data;
         this.isEditing = false;
         this.userForm.disable();
         this.loading = false;
+        this.success = 'User updated successfully';
         this.cdr.detectChanges();
-        console.log('User updated successfully', data);
+        this.autoHideSuccess();
       },
-      error: (err) => {
-        console.error('Error updating user:', err);
-        this.error = 'Failed to update user';
+      error: (err: ErrorResponse) => {
+        this.setError(err);
         this.loading = false;
         this.cdr.detectChanges();
       }
     });
   }
 
+  //  Loaders 
+
+  loadUser(): void {
+    this.loading = true;
+    this.clearMessages();
+
+    this.usersService.getUserById(this.userId).subscribe({
+      next: (data: User) => {
+        this.user = data;
+        this.populateForm();
+        this.loading = false;
+        this.cdr.detectChanges();
+        this.loadTickets();
+      },
+      error: (err: ErrorResponse) => {
+        this.setError(err);
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  loadTickets(): void {
+    this.loadingTickets = true;
+
+    // Use dedicated endpoints instead of fetching all tickets and filtering client-side
+    this.ticketsService.getTicketsByUserId(this.userId).subscribe({
+      next: (data: Ticket[]) => {
+        this.createdTickets = data;
+        this.loadingTickets = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.loadingTickets = false;
+        this.cdr.detectChanges();
+      }
+    });
+
+    this.ticketsService.getTicketsAssignedTo(this.userId).subscribe({
+      next: (data: Ticket[]) => {
+        this.assignedTickets = data;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  //  Navigation 
+
   setTab(tab: 'info' | 'created' | 'assigned'): void {
     this.activeTab = tab;
+    this.clearMessages();
   }
 
   goBack(): void {
@@ -165,61 +181,55 @@ export class UserDetails implements OnInit {
     this.router.navigate(['/tickets', ticketId]);
   }
 
+  //  Helpers 
+
   getRoleBadgeClass(role: Role): string {
     switch (role) {
-      case Role.ADMIN:
-        return 'bg-red-100 text-red-800';
-      case Role.MANAGER:
-        return 'bg-blue-100 text-blue-800';
-      case Role.USER:
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case Role.ADMIN: return 'bg-red-100 text-red-800';
+      case Role.MANAGER: return 'bg-blue-100 text-blue-800';
+      case Role.USER: return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   }
 
   getStatusBadgeClass(status: string): string {
     switch (status) {
-      case 'IN_PROGRESS':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'VALIDATED':
-        return 'bg-green-100 text-green-800';
-      case 'REJECTED':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'IN_PROGRESS': return 'bg-yellow-100 text-yellow-800';
+      case 'VALIDATED': return 'bg-green-100 text-green-800';
+      case 'REJECTED': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   }
 
   formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric'
     });
   }
 
   getInitials(name: string): string {
-    return name
-      .split(' ')
-      .map(n => n.charAt(0))
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
+    return name.split(' ').map(n => n.charAt(0)).join('').toUpperCase().substring(0, 2);
   }
 
-  // Getters
-  get name() {
-    return this.userForm.get('name');
+  private setError(err: ErrorResponse): void {
+    this.error = err?.message ?? 'An unexpected error occurred';
+    this.errorType = err?.type ?? null;
   }
 
-  get email() {
-    return this.userForm.get('email');
+  private clearMessages(): void {
+    this.error = null;
+    this.errorType = null;
+    this.success = null;
   }
 
-
-  get jobTitle() {
-    return this.userForm.get('jobTitle');
+  private autoHideSuccess(): void {
+    setTimeout(() => {
+      this.success = null;
+      this.cdr.detectChanges();
+    }, 3000);
   }
+
+  get name() { return this.userForm.get('name'); }
+  get email() { return this.userForm.get('email'); }
+  get jobTitle() { return this.userForm.get('jobTitle'); }
 }

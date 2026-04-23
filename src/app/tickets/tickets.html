@@ -1,13 +1,13 @@
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <!-- Header -->
   <div
     class="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
   >
     <h3 class="text-lg font-semibold text-gray-800">Tickets</h3>
-
     <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
       <div class="relative">
         <lucide-icon
-          name="Search"
+          name="search"
           size="16"
           class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
         ></lucide-icon>
@@ -31,6 +31,30 @@
     </div>
   </div>
 
+  <!-- Error banner -->
+  @if (error) {
+    <div
+      class="mx-4 sm:mx-6 mt-4 px-4 py-3 rounded-lg border flex items-start gap-3 text-sm"
+      [ngClass]="{
+        'bg-red-50 border-red-200 text-red-800':
+          errorType === 'RESOURCE_NOT_FOUND' || errorType === 'INTERNAL_ERROR' || !errorType,
+        'bg-yellow-50 border-yellow-200 text-yellow-800':
+          errorType === 'BUSINESS_RULE_VIOLATION' || errorType === 'VALIDATION_ERROR',
+      }"
+    >
+      <lucide-icon
+        [name]="errorType === 'RESOURCE_NOT_FOUND' ? 'searchX' : 'triangleAlert'"
+        [size]="16"
+        class="shrink-0 mt-0.5"
+      ></lucide-icon>
+      <span class="flex-1">{{ error }}</span>
+      <button (click)="error = null; errorType = null" class="opacity-60 hover:opacity-100">
+        <lucide-icon name="x" [size]="14"></lucide-icon>
+      </button>
+    </div>
+  }
+
+  <!-- Desktop Table -->
   <div class="hidden sm:block overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
@@ -56,14 +80,15 @@
             Status
           </th>
           <th
-            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none"
+            (click)="handleSortByDate()"
           >
             Created At
             <lucide-angular
-              (click)="handleSortByDate()"
-              name="arrowDownUp"
-              class="text-gray-700 w-4 h-4 ml-1 inline-block cursor-pointer"
-            ></lucide-angular>
+              [name]="sortDirection === 'desc' ? 'arrowDown' : 'arrowUp'"
+              class="text-gray-500 w-4 h-4 ml-1 inline-block"
+            >
+            </lucide-angular>
           </th>
           <th
             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -75,21 +100,19 @@
       <tbody class="bg-white divide-y divide-gray-200">
         @if (loading) {
           <tr>
-            <td colspan="7" class="px-6 py-8 text-center">
+            <td colspan="6" class="px-6 py-8 text-center">
               <div class="flex items-center justify-center gap-2 text-gray-500">
                 <lucide-angular name="loaderCircleIcon" class="animate-spin"></lucide-angular>
                 Loading tickets...
               </div>
             </td>
           </tr>
-        }
-        @if (error && !loading) {
+        } @else if (tickets.length === 0) {
           <tr>
-            <td colspan="7" class="px-6 py-4 text-center text-red-500">{{ error }}</td>
+            <td colspan="6" class="px-6 py-12 text-center text-gray-500">No tickets found</td>
           </tr>
-        }
-        @if (!loading && !error) {
-          @for (ticket of tickets; track $index) {
+        } @else {
+          @for (ticket of tickets; track ticket.ticketId) {
             <tr class="hover:bg-gray-50">
               <td class="px-6 py-4 text-sm font-medium text-gray-900">
                 {{
@@ -101,22 +124,37 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 @if (ticket.clientName.length === 1) {
-                  <span class="px-2 py-1 text-xs font-semibold rounded-full">
-                    {{ ticket.clientName[0] }}
-                  </span>
+                  <span
+                    class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700"
+                    >{{ ticket.clientName[0] }}</span
+                  >
                 } @else {
-                  <span class="px-2 py-1 text-xs font-semibold rounded-full">
+                  <span
+                    class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700"
+                  >
                     {{ ticket.clientName[0] }} +{{ ticket.clientName.length - 1 }}
                     <a
                       (click)="viewTicket(ticket.ticketId)"
-                      class="hover:text-blue-900 cursor-pointer"
+                      class="text-blue-600 hover:text-blue-900 cursor-pointer ml-1"
                       >more</a
                     >
                   </span>
                 }
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {{ ticket.status === 'IN_PROGRESS' ? 'IN PROGRESS' : ticket.status }}
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span
+                  class="px-2 py-1 text-xs font-semibold rounded-full"
+                  [ngClass]="{
+                    'bg-yellow-100 text-yellow-800': ticket.status === 'IN_PROGRESS',
+                    'bg-green-100 text-green-800': ticket.status === 'VALIDATED',
+                    'bg-red-100 text-red-800': ticket.status === 'REJECTED',
+                    'bg-blue-100 text-blue-800': ticket.status === 'PENDING_VALIDATION',
+                    'bg-gray-100 text-gray-700':
+                      ticket.status === 'ARCHIVED' || ticket.status === 'CANCELLED',
+                  }"
+                >
+                  {{ ticket.status === 'IN_PROGRESS' ? 'IN PROGRESS' : ticket.status }}
+                </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {{ formatDate(ticket.createdAt) }}
@@ -131,30 +169,21 @@
             </tr>
           }
         }
-        @if (!loading && !error && tickets.length === 0) {
-          <tr>
-            <td colspan="7" class="px-6 py-12 text-center text-gray-500">No tickets found</td>
-          </tr>
-        }
       </tbody>
     </table>
   </div>
 
+  <!-- Mobile Cards -->
   <div class="sm:hidden divide-y divide-gray-200">
     @if (loading) {
       <div class="px-4 py-8 flex items-center justify-center gap-2 text-gray-500">
         <lucide-angular name="loaderCircleIcon" class="animate-spin"></lucide-angular>
         Loading tickets...
       </div>
-    }
-    @if (error && !loading) {
-      <div class="px-4 py-4 text-center text-red-500">{{ error }}</div>
-    }
-    @if (!loading && !error && tickets.length === 0) {
+    } @else if (tickets.length === 0) {
       <div class="px-4 py-12 text-center text-gray-500">No tickets found</div>
-    }
-    @if (!loading && !error) {
-      @for (ticket of tickets; track $index) {
+    } @else {
+      @for (ticket of tickets; track ticket.ticketId) {
         <div
           class="px-4 py-4 hover:bg-gray-50 cursor-pointer"
           (click)="viewTicket(ticket.ticketId)"
@@ -162,7 +191,15 @@
           <div class="flex items-start justify-between gap-3 mb-2">
             <span class="text-sm font-semibold text-blue-600">#{{ ticket.ticketId }}</span>
             <span
-              class="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 shrink-0"
+              class="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
+              [ngClass]="{
+                'bg-yellow-100 text-yellow-800': ticket.status === 'IN_PROGRESS',
+                'bg-green-100 text-green-800': ticket.status === 'VALIDATED',
+                'bg-red-100 text-red-800': ticket.status === 'REJECTED',
+                'bg-blue-100 text-blue-800': ticket.status === 'PENDING_VALIDATION',
+                'bg-gray-100 text-gray-700':
+                  ticket.status === 'ARCHIVED' || ticket.status === 'CANCELLED',
+              }"
             >
               {{ ticket.status === 'IN_PROGRESS' ? 'IN PROGRESS' : ticket.status }}
             </span>
@@ -181,7 +218,12 @@
             </div>
             <div class="flex items-center gap-1">
               <lucide-icon name="building2" [size]="11" class="text-gray-400"></lucide-icon>
-              <span>{{ ticket.clientName }}</span>
+              <span
+                >{{ ticket.clientName[0]
+                }}{{
+                  ticket.clientName.length > 1 ? ' +' + (ticket.clientName.length - 1) : ''
+                }}</span
+              >
             </div>
             <div class="flex items-center gap-1">
               <lucide-icon name="calendar" [size]="11" class="text-gray-400"></lucide-icon>
@@ -193,6 +235,7 @@
     }
   </div>
 
+  <!-- Pagination -->
   <div class="px-4 sm:px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-2">
     <div class="text-sm text-gray-700">
       @if (totalElements > 0) {

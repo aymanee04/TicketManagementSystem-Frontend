@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Ticket } from '../models/ticket.model';
@@ -6,11 +6,10 @@ import { TicketsService } from '../services/tickets';
 import { TicketStatus } from '../models/enums';
 import { LucideAngularModule } from 'lucide-angular';
 import { Router } from '@angular/router';
-import { User } from '../models/user.model';
-import { Observable, switchMap } from 'rxjs';
 import { AuthService } from '../services/auth';
-import { PageResponse } from '../models/pagedResponse.model';
-
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { ErrorResponse } from '../models/ErrorResponse';
 
 @Component({
   selector: 'app-tickets',
@@ -19,23 +18,23 @@ import { PageResponse } from '../models/pagedResponse.model';
   templateUrl: './tickets.html',
   styleUrl: './tickets.css'
 })
-export class Tickets implements OnInit {
+export class Tickets implements OnInit, OnDestroy {
+
   tickets: Ticket[] = [];
-  loading: boolean = false;
+  loading = false;
   error: string | null = null;
-  searchTerm: string = '';
+  errorType: string | null = null;
+
+  searchTerm = '';
   selectedStatus: TicketStatus | 'ALL' = 'ALL';
-  sortAscending: boolean = false;
-  currentUser: User | null = null;
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   TicketStatus = TicketStatus;
 
-  // Pagination
-  currentPage: number = 0;
-  pageSize: number = 8;
-  totalElements: number = 0;
-  totalPages: number = 0;
-  pageSizeOptions: number[] = [5, 10, 20, 50];
+  currentPage = 0;
+  pageSize = 8;
+  totalElements = 0;
+  totalPages = 0;
 
   statusOptions = [
     { value: 'ALL', label: 'All Status' },
@@ -45,6 +44,8 @@ export class Tickets implements OnInit {
     { value: TicketStatus.ARCHIVED, label: 'Archived' },
     { value: TicketStatus.CANCELLED, label: 'Cancelled' }
   ];
+
+  private destroy$ = new Subject<void>();
 
   constructor(
     private ticketsService: TicketsService,
@@ -57,71 +58,45 @@ export class Tickets implements OnInit {
     this.loadTickets();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  //  Loaders 
+
   loadTickets(): void {
     this.loading = true;
+    this.clearError();
 
-    this.authService.currentUser$.pipe(
-      switchMap(user => {
-        this.currentUser = user;
-
-        if (this.searchTerm.trim()) {
-          return this.ticketsService.searchTicketsWithPagination(this.searchTerm, this.currentPage, this.pageSize);
-        }
-
-        if (this.selectedStatus !== 'ALL') {
-          return this.ticketsService.getTicketsByStatusWithPagination(this.selectedStatus, this.currentPage, this.pageSize);
-        }
-
-        if (user?.clientId) {
-          return this.ticketsService.getTicketsByClient(user.clientId);
-        }
-
-        return this.ticketsService.getTicketsWithPagination(this.currentPage, this.pageSize);
-      })
-    ).subscribe({
+    this.buildRequest().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
-        if (this.isPageResponse(data)) {
-          this.tickets = data.content;
-          this.totalElements = data.totalElements;
-          this.totalPages = data.totalPages;
-          this.currentPage = data.pageNumber;
-        } else {
-          this.tickets = data as Ticket[];
-          this.totalElements = this.tickets.length;
-          this.totalPages = Math.ceil(this.tickets.length / this.pageSize);
-          const start = this.currentPage * this.pageSize;
-          const end = start + this.pageSize;
-          this.tickets = this.tickets.slice(start, end);
-        }
-
+        this.tickets = data.content;
+        this.totalElements = data.totalElements;
+        this.totalPages = data.totalPages;
+        this.currentPage = data.pageNumber;
         this.loading = false;
         this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('Error loading tickets:', err);
-        this.error = 'Failed to load tickets. Please try again.';
+      error: (err: ErrorResponse) => {
+        this.setError(err);
         this.loading = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  isPageResponse(data: any): data is PageResponse<Ticket> {
-    return data && typeof data === 'object' && 'content' in data && 'totalElements' in data;
-  }
+  //  Filters 
 
-  onStatusChange(): void {
+  onSearch(): void {
     this.currentPage = 0;
     this.loadTickets();
   }
 
-  onSearch(): void {
+  onStatusChange(): void {
     this.currentPage = 0;
-    if (this.searchTerm.trim()) {
-      this.loadTickets();
-    } else {
-      this.loadTickets();
-    }
+    this.searchTerm = '';
+    this.loadTickets();
   }
 
   clearSearch(): void {
@@ -129,6 +104,14 @@ export class Tickets implements OnInit {
     this.currentPage = 0;
     this.loadTickets();
   }
+
+  handleSortByDate(): void {
+    this.sortDirection = this.sortDirection === 'desc' ? 'asc' : 'desc';
+    this.currentPage = 0;
+    this.loadTickets();
+  }
+
+  //  Pagination 
 
   nextPage(): void {
     if (this.currentPage < this.totalPages - 1) {
@@ -150,29 +133,44 @@ export class Tickets implements OnInit {
     return { start, end };
   }
 
-  formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      minute: '2-digit',
-      hour: '2-digit'
-    });
-  }
+  //  Navigation 
 
   viewTicket(ticketId: number): void {
     this.router.navigate(['/tickets', ticketId]);
   }
 
-  handleSortByDate(): void {
-    if (this.sortAscending) {
-      this.tickets.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      this.sortAscending = false;
-    } else {
-      this.tickets.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-      this.sortAscending = true;
+  //  Helpers 
+
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  }
+
+  private buildRequest() {
+    if (this.searchTerm.trim()) {
+      return this.ticketsService.searchTicketsWithPagination(
+        this.searchTerm, this.currentPage, this.pageSize, 'createdAt', this.sortDirection
+      );
     }
-    this.cdr.detectChanges();
+    if (this.selectedStatus !== 'ALL') {
+      return this.ticketsService.getTicketsByStatusWithPagination(
+        this.selectedStatus, this.currentPage, this.pageSize
+      );
+    }
+    return this.ticketsService.getTicketsWithPagination(
+      this.currentPage, this.pageSize, 'createdAt', this.sortDirection
+    );
+  }
+
+  private setError(err: ErrorResponse): void {
+    this.error = err?.message ?? 'Failed to load tickets. Please try again.';
+    this.errorType = err?.type ?? null;
+  }
+
+  private clearError(): void {
+    this.error = null;
+    this.errorType = null;
   }
 }

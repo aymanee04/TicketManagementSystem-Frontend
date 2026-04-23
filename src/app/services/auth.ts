@@ -50,7 +50,6 @@ export class AuthService {
     return this.http.post<any>(`${this.backendHost}/auth/login`, { email, password })
       .pipe(
         tap(response => {
-          console.log('Login response:', response);
 
           if (this.isBrowser && response['access-token']) {
             localStorage.setItem('access-token', response['access-token']);

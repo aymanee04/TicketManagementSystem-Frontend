@@ -62,7 +62,7 @@ export class Login {
 
     this.authService.login(email, password).subscribe({
       next: (response) => {
-        console.log('Login component: Login successful', response);
+        console.log('Login component: Login successful');
         this.loading = false;
         this.router.navigate(['/admin']);
       },

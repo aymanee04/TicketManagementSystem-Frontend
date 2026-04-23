@@ -1,166 +1,207 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { CreateTicketRequest, Ticket } from '../models/ticket.model';
 import { TicketStatus } from '../models/enums';
 import { PageResponse } from '../models/pagedResponse.model';
+import { ErrorResponse } from '../models/ErrorResponse';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TicketsService {
 
-  private backendHost = 'http://localhost:8080';
+  private readonly api = 'http://localhost:8080/api/tickets';
 
   constructor(private http: HttpClient) { }
 
-  public getTickets(): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(`${this.backendHost}/api/tickets`);
+  //  Create 
+
+  createTicket(request: CreateTicketRequest): Observable<Ticket> {
+    return this.http.post<Ticket>(this.api, request).pipe(
+      catchError(this.handleError)
+    );
   }
 
-  public getTicketById(id: number): Observable<Ticket> {
-    return this.http.get<Ticket>(`${this.backendHost}/api/tickets/${id}`);
+  createIncident(request: {
+    title: string;
+    description: string;
+    clientIds: number[];
+  }): Observable<Ticket> {
+    return this.http.post<Ticket>(`${this.api}/incident`, request).pipe(
+      catchError(this.handleError)
+    );
   }
 
-  public getTicketsByStatus(status: TicketStatus): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(`${this.backendHost}/api/tickets/status/${status}`);
+  //  Ticket Lifecycle (Update) 
+
+  assignTicket(ticketId: number, assignedToId: number): Observable<Ticket> {
+    return this.http.put<Ticket>(
+      `${this.api}/${ticketId}/assign`,
+      { assignedToId }
+    ).pipe(catchError(this.handleError));
   }
 
-  public getTicketsByUserId(userId: number): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(`${this.backendHost}/api/tickets/user/${userId}`);
+  approveTicket(ticketId: number, comment: string): Observable<Ticket> {
+    return this.http.put<Ticket>(
+      `${this.api}/${ticketId}/approve`,
+      { comment }
+    ).pipe(catchError(this.handleError));
   }
 
-  public getTicketsByClient(clientId: number): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(`${this.backendHost}/api/tickets/client/${clientId}`);
+  rejectTicket(ticketId: number, comment: string): Observable<Ticket> {
+    return this.http.put<Ticket>(
+      `${this.api}/${ticketId}/reject`,
+      { comment }
+    ).pipe(catchError(this.handleError));
   }
 
-  public createTicket(request: CreateTicketRequest): Observable<Ticket> {
-    return this.http.post<Ticket>(`${this.backendHost}/api/tickets`, request);
+  archiveTicket(ticketId: number): Observable<Ticket> {
+    return this.http.put<Ticket>(
+      `${this.api}/${ticketId}/archive`,
+      {}
+    ).pipe(catchError(this.handleError));
   }
 
-  createIncident(incident: { title: string; description: string; clientIds: number[] }): Observable<Ticket> {
-    return this.http.post<Ticket>(`${this.backendHost}/api/tickets/incident`, incident);
+  cancelTicket(ticketId: number): Observable<Ticket> {
+    return this.http.put<Ticket>(
+      `${this.api}/${ticketId}/cancel`,
+      {}
+    ).pipe(catchError(this.handleError));
   }
 
-  public getTicketsAssignedTo(userId: number): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(`${this.backendHost}/api/tickets/assigned/${userId}`);
+  //  Delete 
+
+  hardDeleteTicket(ticketId: number): Observable<void> {
+    return this.http.delete<void>(`${this.api}/${ticketId}`).pipe(
+      catchError(this.handleError)
+    );
   }
 
+  //  Read - simple 
 
-  public uploadAttachment(ticketId: number, file: File): Observable<any> {
+  getTicketById(id: number): Observable<Ticket> {
+    return this.http.get<Ticket>(`${this.api}/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getTickets(): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(this.api).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getTicketsByStatus(status: TicketStatus): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(`${this.api}/status/${status}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getTicketsByUserId(userId: number): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(`${this.api}/user/${userId}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getTicketsByClient(clientId: number): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(`${this.api}/client/${clientId}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getTicketsAssignedTo(userId: number): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(`${this.api}/assigned/${userId}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  searchTickets(searchTerm: string): Observable<Ticket[]> {
+    const params = new HttpParams().set('q', searchTerm);
+    return this.http.get<Ticket[]>(`${this.api}/search`, { params }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  //  Attachments 
+
+  uploadAttachment(ticketId: number, file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post(
-      `${this.backendHost}/api/attachments/ticket/${ticketId}`,
+      `${this.api}/attachments/ticket/${ticketId}`,
       formData
-    );
+    ).pipe(catchError(this.handleError));
   }
 
-  public searchByClient(searchTerm: string): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(
-      `${this.backendHost}/api/tickets/search/client?q=${encodeURIComponent(searchTerm)}`
-    );
-  }
-
-  public searchTickets(searchTerm: string): Observable<Ticket[]> {
-    return this.http.get<Ticket[]>(
-      `${this.backendHost}/api/tickets/search?q=${encodeURIComponent(searchTerm)}`
-    );
-  }
-
-  public assignTicket(ticketId: number, userId: number): Observable<Ticket> {
-    return this.http.put<Ticket>(
-      `${this.backendHost}/api/tickets/${ticketId}/assign`,
-      { assignedToId: userId }
-    );
-  }
-
-  public approveTicket(ticketId: number, managerId: number, comment: string): Observable<Ticket> {
-    return this.http.put<Ticket>(
-      `${this.backendHost}/api/tickets/${ticketId}/approve?managerId=${managerId}`,
-      { comment: comment }
-    );
-  }
-
-  public rejectTicket(ticketId: number, managerId: number, comment: string): Observable<Ticket> {
-    return this.http.put<Ticket>(
-      `${this.backendHost}/api/tickets/${ticketId}/reject?managerId=${managerId}`,
-      { comment: comment }
-    );
-  }
-
-  public archiveTicket(ticketId: number): Observable<Ticket> {
-    return this.http.put<Ticket>(
-      `${this.backendHost}/api/tickets/${ticketId}/archive`,
-      {}
-    );
-  }
-
-  public cancelTicket(ticketId: number): Observable<Ticket> {
-    return this.http.put<Ticket>(
-      `${this.backendHost}/api/tickets/${ticketId}/cancel`,
-      {}
-    );
-  }
-
-  public downloadAttachment(attachmentId: number): Observable<Blob> {
+  downloadAttachment(attachmentId: number): Observable<Blob> {
     return this.http.get(
-      `${this.backendHost}/api/attachments/${attachmentId}/download`,
-      {
-        responseType: 'blob'
-      }
-    );
+      `${this.api}/attachments/${attachmentId}/download`,
+      { responseType: 'blob' }
+    ).pipe(catchError(this.handleError));
   }
 
+  //  Read - paginated 
+  // All paginated endpoints require ?page param to trigger the paginated controller method.
 
-  // Pagination useCase
-  public getTicketsWithPagination(
-    page: number = 0,
-    size: number = 10,
-    sortBy: string = 'createdAt',
-    direction: string = 'desc'
+  getTicketsWithPagination(
+    page = 0,
+    size = 10,
+    sortBy = 'createdAt',
+    direction = 'desc'
   ): Observable<PageResponse<Ticket>> {
     const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString())
+      .set('page', page)
+      .set('size', size)
       .set('sortBy', sortBy)
       .set('direction', direction);
-
-    return this.http.get<PageResponse<Ticket>>(
-      `${this.backendHost}/api/tickets`,
-      { params }
+    return this.http.get<PageResponse<Ticket>>(this.api, { params }).pipe(
+      catchError(this.handleError)
     );
   }
 
-  public getTicketsByStatusWithPagination(
+  getTicketsByStatusWithPagination(
     status: TicketStatus,
-    page: number = 0,
-    size: number = 10
+    page = 0,
+    size = 10,
+    sortBy = 'createdAt',
+    direction = 'desc'
   ): Observable<PageResponse<Ticket>> {
     const params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString());
-
+      .set('page', page)
+      .set('size', size)
+      .set('sortBy', sortBy)
+      .set('direction', direction);
     return this.http.get<PageResponse<Ticket>>(
-      `${this.backendHost}/api/tickets/status/${status}`,
+      `${this.api}/status/${status}`,
       { params }
-    );
+    ).pipe(catchError(this.handleError));
   }
 
-  public searchTicketsWithPagination(
+  searchTicketsWithPagination(
     searchTerm: string,
-    page: number = 0,
-    size: number = 10
+    page = 0,
+    size = 10,
+    sortBy = 'createdAt',
+    direction = 'desc'
   ): Observable<PageResponse<Ticket>> {
     const params = new HttpParams()
       .set('q', searchTerm)
-      .set('page', page.toString())
-      .set('size', size.toString());
-
+      .set('page', page)      // ?page triggers the paginated controller method
+      .set('size', size)
+      .set('sortBy', sortBy)
+      .set('direction', direction);
     return this.http.get<PageResponse<Ticket>>(
-      `${this.backendHost}/api/tickets/search`,
+      `${this.api}/search`,
       { params }
-    );
+    ).pipe(catchError(this.handleError));
   }
 
+  //  Error handler 
+
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    const err: ErrorResponse = error.error;
+    return throwError(() => err);
+  }
 }
