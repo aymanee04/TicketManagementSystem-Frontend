@@ -34,7 +34,17 @@ export class AuthService {
 
     if (this.isBrowser) {
       const userJson = localStorage.getItem('currentUser');
-      storedUser = userJson ? JSON.parse(userJson) : null;
+      const parsed: User | null = userJson ? JSON.parse(userJson) : null;
+
+      // If stored user is missing required fields, wipe everything and force re-login
+      if (parsed && (!parsed.name || !parsed.userId)) {
+        localStorage.removeItem('access-token');
+        localStorage.removeItem('refresh-token');
+        localStorage.removeItem('currentUser');
+        storedUser = null;
+      } else {
+        storedUser = parsed;
+      }
     }
 
     this.currentUserSubject = new BehaviorSubject<User | null>(storedUser);
@@ -50,8 +60,9 @@ export class AuthService {
     return this.http.post<any>(`${this.backendHost}/auth/login`, { email, password })
       .pipe(
         tap(response => {
-
           if (this.isBrowser && response['access-token']) {
+            localStorage.removeItem('currentUser');
+
             localStorage.setItem('access-token', response['access-token']);
             localStorage.setItem('refresh-token', response['refresh-token']);
 
@@ -63,7 +74,6 @@ export class AuthService {
           }
         }),
         catchError(error => {
-          console.error('Login error in service:', error);
           this.clearAuth();
           return throwError(() => error);
         })
@@ -87,14 +97,19 @@ export class AuthService {
   refreshToken(): Observable<LoginResponse> {
     const refreshToken = this.isBrowser ? localStorage.getItem('refresh-token') : null;
     return this.http.get<LoginResponse>(`${this.backendHost}/auth/refreshToken`, {
-      headers: {
-        'Authorization': `Bearer ${refreshToken}`
-      }
+      headers: { 'Authorization': `Bearer ${refreshToken}` }
     }).pipe(
       tap(response => {
         if (this.isBrowser) {
           localStorage.setItem('access-token', response['access-token']);
           localStorage.setItem('refresh-token', response['refresh-token']);
+
+          // Re-decode and update currentUser too
+          const user = this.decodeToken(response['access-token']);
+          if (user) {
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            this.currentUserSubject.next(user);
+          }
         }
       })
     );
@@ -129,15 +144,15 @@ export class AuthService {
   private decodeToken(token: string): User | null {
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-
+      console.log('JWT Payload:', payload);
       return {
-        userId: payload.userId || payload.sub,
-        name: payload.name || payload.username,
+        userId: payload.userId,
         email: payload.email,
-        roles: payload.roles || payload.authorities || [],
+        name: payload.name,
+        jobTitle: payload.jobTitle,
+        roles: payload.roles || [],
         clientId: payload.clientId,
         clientName: payload.clientName,
-        jobTitle: payload.jobTitle
       };
     } catch (error) {
       console.error('Error decoding token:', error);

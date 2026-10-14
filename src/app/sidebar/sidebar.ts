@@ -74,6 +74,7 @@ export class Sidebar implements OnInit, OnDestroy {
   }
 
   getInitials(name: string): string {
+    if (!name || typeof name !== 'string') return '?';
     return name
       .split(' ')
       .map(n => n.charAt(0))

@@ -74,7 +74,6 @@ export class TicketDetails implements OnInit {
   //  Loaders 
 
   loadCurrentUser(): void {
-    // Use AuthService instead of reading localStorage directly
     this.authService.currentUser$.subscribe({
       next: (user) => {
         if (user?.userId) {
@@ -106,7 +105,6 @@ export class TicketDetails implements OnInit {
       error: (err: ErrorResponse) => {
         this.setError(err);
         this.loading = false;
-        // If ticket doesn't exist redirect back after showing the message
         if (err?.type === 'RESOURCE_NOT_FOUND') {
           setTimeout(() => this.router.navigate(['/tickets']), 2500);
         }
